@@ -202,13 +202,13 @@ def get_image_path(image_lists, label_name, index, image_dir, category):
 
   """
   if label_name not in image_lists:
-    tf.compat.v1.logging.fatal('Label does not exist %s.', label_name)
+    tf.logging.fatal('Label does not exist %s.', label_name)
   label_lists = image_lists[label_name]
   if category not in label_lists:
-    tf.compat.v1.logging.fatal('Category does not exist %s.', category)
+    tf.logging.fatal('Category does not exist %s.', category)
   category_list = label_lists[category]
   if not category_list:
-    tf.compat.v1.logging.fatal('Label %s has no images in the category %s.',
+    tf.logging.fatal('Label %s has no images in the category %s.',
                      label_name, category)
   mod_index = index % len(category_list)
   base_name = category_list[mod_index]
@@ -244,11 +244,11 @@ def create_inception_graph():
     Graph holding the trained Inception network, and various tensors we'll be
     manipulating.
   """
-  with tf.compat.v1.Session() as sess:
+  with tf.Session() as sess:
     model_filename = os.path.join(
         FLAGS.model_dir, 'classify_image_graph_def.pb')
     with gfile.FastGFile(model_filename, 'rb') as f:
-      graph_def = tf.compat.v1.GraphDef()
+      graph_def = tf.GraphDef()
       graph_def.ParseFromString(f.read())
       bottleneck_tensor, jpeg_data_tensor, resized_input_tensor = (
           tf.import_graph_def(graph_def, name='', return_elements=[
@@ -351,7 +351,7 @@ def create_bottleneck_file(bottleneck_path, image_lists, label_name, index,
   print('Creating bottleneck at ' + bottleneck_path)
   image_path = get_image_path(image_lists, label_name, index, image_dir, category)
   if not gfile.Exists(image_path):
-    tf.compat.v1.logging.fatal('File does not exist %s', image_path)
+    tf.logging.fatal('File does not exist %s', image_path)
   image_data = gfile.FastGFile(image_path, 'rb').read()
   bottleneck_values = run_bottleneck_on_image(sess, image_data, jpeg_data_tensor, bottleneck_tensor)
   bottleneck_string = ','.join(str(x) for x in bottleneck_values)
@@ -547,7 +547,7 @@ def get_random_distorted_bottlenecks(
     image_path = get_image_path(image_lists, label_name, image_index, image_dir,
                                 category)
     if not gfile.Exists(image_path):
-      tf.compat.v1.logging.fatal('File does not exist %s', image_path)
+      tf.logging.fatal('File does not exist %s', image_path)
     jpeg_data = gfile.FastGFile(image_path, 'rb').read()
     # Note that we materialize the distorted_image_data as a numpy array before
     # sending running inference on the image. This involves 2 memory copies and
@@ -636,14 +636,14 @@ def add_input_distortions(flip_left_right, random_crop, random_scale,
     The jpeg input layer and the distorted result tensor.
   """
 
-  jpeg_data = tf.compat.v1.placeholder(tf.string, name='DistortJPGInput')
+  jpeg_data = tf.placeholder(tf.string, name='DistortJPGInput')
   decoded_image = tf.image.decode_jpeg(jpeg_data, channels=MODEL_INPUT_DEPTH)
   decoded_image_as_float = tf.cast(decoded_image, dtype=tf.float32)
   decoded_image_4d = tf.expand_dims(decoded_image_as_float, 0)
   margin_scale = 1.0 + (random_crop / 100.0)
   resize_scale = 1.0 + (random_scale / 100.0)
   margin_scale_value = tf.constant(margin_scale)
-  resize_scale_value = tf.random.uniform(tensor_shape.scalar(),
+  resize_scale_value = tf.random_uniform(tensor_shape.scalar(),
                                          minval=1.0,
                                          maxval=resize_scale)
   scale_value = tf.multiply(margin_scale_value, resize_scale_value)
@@ -651,10 +651,10 @@ def add_input_distortions(flip_left_right, random_crop, random_scale,
   precrop_height = tf.multiply(scale_value, MODEL_INPUT_HEIGHT)
   precrop_shape = tf.stack([precrop_height, precrop_width])
   precrop_shape_as_int = tf.cast(precrop_shape, dtype=tf.int32)
-  precropped_image = tf.image.resize(decoded_image_4d,
-                                              precrop_shape_as_int, method=tf.image.ResizeMethod.BILINEAR)
-  precropped_image_3d = tf.squeeze(precropped_image, axis=[0])
-  cropped_image = tf.image.random_crop(precropped_image_3d,
+  precropped_image = tf.image.resize_bilinear(decoded_image_4d,
+                                              precrop_shape_as_int)
+  precropped_image_3d = tf.squeeze(precropped_image, squeeze_dims=[0])
+  cropped_image = tf.random_crop(precropped_image_3d,
                                  [MODEL_INPUT_HEIGHT, MODEL_INPUT_WIDTH,
                                   MODEL_INPUT_DEPTH])
   if flip_left_right:
@@ -663,7 +663,7 @@ def add_input_distortions(flip_left_right, random_crop, random_scale,
     flipped_image = cropped_image
   brightness_min = 1.0 - (random_brightness / 100.0)
   brightness_max = 1.0 + (random_brightness / 100.0)
-  brightness_value = tf.random.uniform(tensor_shape.scalar(),
+  brightness_value = tf.random_uniform(tensor_shape.scalar(),
                                        minval=brightness_min,
                                        maxval=brightness_max)
   brightened_image = tf.multiply(flipped_image, brightness_value)
@@ -673,15 +673,15 @@ def add_input_distortions(flip_left_right, random_crop, random_scale,
 
 def variable_summaries(var):
   """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
-  with tf.compat.v1.name_scope('summaries'):
-    mean = tf.reduce_mean(input_tensor=var)
-    tf.compat.v1.summary.scalar('mean', mean)
-    with tf.compat.v1.name_scope('stddev'):
-      stddev = tf.sqrt(tf.reduce_mean(input_tensor=tf.square(var - mean)))
-    tf.compat.v1.summary.scalar('stddev', stddev)
-    tf.compat.v1.summary.scalar('max', tf.reduce_max(input_tensor=var))
-    tf.compat.v1.summary.scalar('min', tf.reduce_min(input_tensor=var))
-    tf.compat.v1.summary.histogram('histogram', var)
+  with tf.name_scope('summaries'):
+    mean = tf.reduce_mean(var)
+    tf.summary.scalar('mean', mean)
+    with tf.name_scope('stddev'):
+      stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+    tf.summary.scalar('stddev', stddev)
+    tf.summary.scalar('max', tf.reduce_max(var))
+    tf.summary.scalar('min', tf.reduce_min(var))
+    tf.summary.histogram('histogram', var)
 
 
 def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor):
@@ -704,41 +704,41 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor):
     The tensors for the training and cross entropy results, and tensors for the
     bottleneck input and ground truth input.
   """
-  with tf.compat.v1.name_scope('input'):
-    bottleneck_input = tf.compat.v1.placeholder_with_default(
+  with tf.name_scope('input'):
+    bottleneck_input = tf.placeholder_with_default(
         bottleneck_tensor, shape=[None, BOTTLENECK_TENSOR_SIZE],
         name='BottleneckInputPlaceholder')
 
-    ground_truth_input = tf.compat.v1.placeholder(tf.float32,
+    ground_truth_input = tf.placeholder(tf.float32,
                                         [None, class_count],
                                         name='GroundTruthInput')
 
   # Organizing the following ops as `final_training_ops` so they're easier
   # to see in TensorBoard
   layer_name = 'final_training_ops'
-  with tf.compat.v1.name_scope(layer_name):
-    with tf.compat.v1.name_scope('weights'):
-      layer_weights = tf.Variable(tf.random.truncated_normal([BOTTLENECK_TENSOR_SIZE, class_count], stddev=0.001), name='final_weights')
+  with tf.name_scope(layer_name):
+    with tf.name_scope('weights'):
+      layer_weights = tf.Variable(tf.truncated_normal([BOTTLENECK_TENSOR_SIZE, class_count], stddev=0.001), name='final_weights')
       variable_summaries(layer_weights)
-    with tf.compat.v1.name_scope('biases'):
+    with tf.name_scope('biases'):
       layer_biases = tf.Variable(tf.zeros([class_count]), name='final_biases')
       variable_summaries(layer_biases)
-    with tf.compat.v1.name_scope('Wx_plus_b'):
+    with tf.name_scope('Wx_plus_b'):
       logits = tf.matmul(bottleneck_input, layer_weights) + layer_biases
-      tf.compat.v1.summary.histogram('pre_activations', logits)
+      tf.summary.histogram('pre_activations', logits)
 
   final_tensor = tf.nn.softmax(logits, name=final_tensor_name)
-  tf.compat.v1.summary.histogram('activations', final_tensor)
+  tf.summary.histogram('activations', final_tensor)
 
-  with tf.compat.v1.name_scope('cross_entropy'):
+  with tf.name_scope('cross_entropy'):
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
-        labels=tf.stop_gradient(ground_truth_input), logits=logits)
-    with tf.compat.v1.name_scope('total'):
-      cross_entropy_mean = tf.reduce_mean(input_tensor=cross_entropy)
-  tf.compat.v1.summary.scalar('cross_entropy', cross_entropy_mean)
+        labels=ground_truth_input, logits=logits)
+    with tf.name_scope('total'):
+      cross_entropy_mean = tf.reduce_mean(cross_entropy)
+  tf.summary.scalar('cross_entropy', cross_entropy_mean)
 
-  with tf.compat.v1.name_scope('train'):
-    train_step = tf.compat.v1.train.GradientDescentOptimizer(FLAGS.learning_rate).minimize(
+  with tf.name_scope('train'):
+    train_step = tf.train.GradientDescentOptimizer(FLAGS.learning_rate).minimize(
         cross_entropy_mean)
 
   return (train_step, cross_entropy_mean, bottleneck_input, ground_truth_input,
@@ -756,14 +756,14 @@ def add_evaluation_step(result_tensor, ground_truth_tensor):
   Returns:
     Tuple of (evaluation step, prediction).
   """
-  with tf.compat.v1.name_scope('accuracy'):
-    with tf.compat.v1.name_scope('correct_prediction'):
-      prediction = tf.argmax(input=result_tensor, axis=1)
+  with tf.name_scope('accuracy'):
+    with tf.name_scope('correct_prediction'):
+      prediction = tf.argmax(result_tensor, 1)
       correct_prediction = tf.equal(
-          prediction, tf.argmax(input=ground_truth_tensor, axis=1))
-    with tf.compat.v1.name_scope('accuracy'):
-      evaluation_step = tf.reduce_mean(input_tensor=tf.cast(correct_prediction, tf.float32))
-  tf.compat.v1.summary.scalar('accuracy', evaluation_step)
+          prediction, tf.argmax(ground_truth_tensor, 1))
+    with tf.name_scope('accuracy'):
+      evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+  tf.summary.scalar('accuracy', evaluation_step)
   return evaluation_step, prediction
 
 def export_model(sess, keys, architecture, saved_model_dir):
@@ -780,25 +780,25 @@ def export_model(sess, keys, architecture, saved_model_dir):
   else:
     raise ValueError('Unknown architecture', architecture)
   in_image = sess.graph.get_tensor_by_name(input_tensor)
-  inputs = {'image': tf.compat.v1.saved_model.utils.build_tensor_info(in_image)}
+  inputs = {'image': tf.saved_model.utils.build_tensor_info(in_image)}
 
   out_classes = sess.graph.get_tensor_by_name('final_result:0')
-  outputs = {'prediction': tf.compat.v1.saved_model.utils.build_tensor_info(out_classes),
-             'classes': tf.compat.v1.saved_model.utils.build_tensor_info(tf.convert_to_tensor(value=list(keys))),}
+  outputs = {'prediction': tf.saved_model.utils.build_tensor_info(out_classes),
+             'classes': tf.saved_model.utils.build_tensor_info(tf.convert_to_tensor(list(keys))),}
 
-  signature = tf.compat.v1.saved_model.signature_def_utils.build_signature_def(
+  signature = tf.saved_model.signature_def_utils.build_signature_def(
       inputs=inputs,
       outputs=outputs,
-      method_name=tf.saved_model.PREDICT_METHOD_NAME)
+      method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
 
-  legacy_init_op = tf.group(tf.compat.v1.tables_initializer(), name='legacy_init_op')
+  legacy_init_op = tf.group(tf.tables_initializer(), name='legacy_init_op')
 
   # Save out the SavedModel.
-  builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(saved_model_dir)
+  builder = tf.saved_model.builder.SavedModelBuilder(saved_model_dir)
   builder.add_meta_graph_and_variables(
-      sess, [tf.saved_model.SERVING],
+      sess, [tf.saved_model.tag_constants.SERVING],
       signature_def_map={
-          tf.saved_model.DEFAULT_SERVING_SIGNATURE_DEF_KEY: 
+          tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY: 
           signature
       },
       legacy_init_op=legacy_init_op)
@@ -806,9 +806,9 @@ def export_model(sess, keys, architecture, saved_model_dir):
 
 def main(_):
   # Setup the directory we'll write summaries to for TensorBoard
-  if tf.io.gfile.exists(FLAGS.summaries_dir):
-    tf.io.gfile.rmtree(FLAGS.summaries_dir)
-  tf.io.gfile.makedirs(FLAGS.summaries_dir)
+  if tf.gfile.Exists(FLAGS.summaries_dir):
+    tf.gfile.DeleteRecursively(FLAGS.summaries_dir)
+  tf.gfile.MakeDirs(FLAGS.summaries_dir)
 
   # Set up the pre-trained graph.
   maybe_download_and_extract()
@@ -831,7 +831,7 @@ def main(_):
   do_distort_images = should_distort_images(
       FLAGS.flip_left_right, FLAGS.random_crop, FLAGS.random_scale,
       FLAGS.random_brightness)
-  sess = tf.compat.v1.Session()
+  sess = tf.Session()
 
   if do_distort_images:
     # We will be applying distortions, so setup the operations we'll need.
@@ -855,13 +855,13 @@ def main(_):
       final_tensor, ground_truth_input)
 
   # Merge all the summaries and write them out to /tmp/retrain_logs (by default)
-  merged = tf.compat.v1.summary.merge_all()
-  train_writer = tf.compat.v1.summary.FileWriter(FLAGS.summaries_dir + '/train',
+  merged = tf.summary.merge_all()
+  train_writer = tf.summary.FileWriter(FLAGS.summaries_dir + '/train',
                                        sess.graph)
-  validation_writer = tf.compat.v1.summary.FileWriter(FLAGS.summaries_dir + '/validation')
+  validation_writer = tf.summary.FileWriter(FLAGS.summaries_dir + '/validation')
 
   # Set up all our weights to their initial default values.
-  init = tf.compat.v1.global_variables_initializer()
+  init = tf.global_variables_initializer()
   sess.run(init)
 
   # Run the training for as many cycles as requested on the command line.
@@ -1117,4 +1117,4 @@ if __name__ == '__main__':
       help='Where to save the exported graph.'
   )
   FLAGS, unparsed = parser.parse_known_args()
-  tf.compat.v1.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
