@@ -805,11 +805,6 @@ def export_model(sess, keys, architecture, saved_model_dir):
   builder.save()
 
 def main(_):
-  # Setup the directory we'll write summaries to for TensorBoard
-  if tf.gfile.Exists(FLAGS.summaries_dir):
-    tf.gfile.DeleteRecursively(FLAGS.summaries_dir)
-  tf.gfile.MakeDirs(FLAGS.summaries_dir)
-
   # Set up the pre-trained graph.
   maybe_download_and_extract()
   graph, bottleneck_tensor, jpeg_data_tensor, resized_image_tensor = (
@@ -855,10 +850,18 @@ def main(_):
       final_tensor, ground_truth_input)
 
   # Merge all the summaries and write them out to /tmp/retrain_logs (by default)
+  # add subdirectory with name of pod:
+  # Setup the directory we'll write summaries to for TensorBoard
+  training_folder = os.getenv('KUBE_POD_NAME', "training_summaries")
+  new_tensorboard_path = FLAGS.summaries_dir + '/' + training_folder + '/training_summaries'
+
+  if tf.gfile.Exists(new_tensorboard_path):
+    tf.gfile.DeleteRecursively(new_tensorboard_path)
+  tf.gfile.MakeDirs(new_tensorboard_path)
+
   merged = tf.summary.merge_all()
-  train_writer = tf.summary.FileWriter(FLAGS.summaries_dir + '/train',
-                                       sess.graph)
-  validation_writer = tf.summary.FileWriter(FLAGS.summaries_dir + '/validation')
+  train_writer = tf.summary.FileWriter(new_tensorboard_path + '/train', sess.graph)
+  validation_writer = tf.summary.FileWriter(new_tensorboard_path + '/validation')
 
   # Set up all our weights to their initial default values.
   init = tf.global_variables_initializer()
@@ -936,12 +939,13 @@ def main(_):
   # Write out the trained graph and labels with the weights stored as constants.
   output_graph_def = graph_util.convert_variables_to_constants(
       sess, graph.as_graph_def(), [FLAGS.final_tensor_name])
-  with gfile.FastGFile(FLAGS.output_graph, 'wb') as f:
+  with gfile.FastGFile(FLAGS.output_graph + '/' + training_folder + '/retrained_graph.pb', 'wb') as f:
     f.write(output_graph_def.SerializeToString())
-  with gfile.FastGFile(FLAGS.output_labels, 'w') as f:
+  with gfile.FastGFile(FLAGS.output_labels + '/' + training_folder + '/retrained_labels.txt', 'w') as f:
     f.write('\n'.join(image_lists.keys()) + '\n')
-
-  export_model(sess, image_lists.keys(), FLAGS.architecture, FLAGS.saved_model_dir)
+  
+  model_output_path = FLAGS.saved_model_dir + '/' + training_folder + '/saved_models'
+  export_model(sess, image_lists.keys(), FLAGS.architecture, model_output_path)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
