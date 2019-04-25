@@ -36,11 +36,12 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   python ./training/retrain.py \
     --bottleneck_dir=/tmp/tensorflow/bottlenecks \
     --model_dir=/tmp/tensorflow/inception \
-    --summaries_dir=/got-image-classification/tf-output/training_summaries/baseline \
-    --output_graph=/got-image-classification/tf-output/retrained_graph.pb \
-    --output_labels=/got-image-classification/tf-output/retrained_labels.txt \
+    --summaries_dir=/got-image-classification/tf-output \
+    --output_graph=/got-image-classification/tf-output \
+    --output_labels=/got-image-classification/tf-output \
     --image_dir=/got-image-classification/training/images \
-    --saved_model_dir=/got-image-classification/tf-output/saved_models/1
+    --saved_model_dir=/got-image-classification/tf-output \
+    --how_many_training_steps 50
 
   tensorboard --logdir=/got-image-classification/tf-output/training_summaries
   ```
@@ -49,7 +50,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.13
+  export IMAGE_TAG=1.141
   export IMAGE_TAG=1.0-gpu
   export ACRNAME=briaracr
 
@@ -126,23 +127,51 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 
 ### Inference
 
+* Local python script
+
   ```bash
   # testing
-  cd ./serving
-  python label-image.py jon-snow.jpg
+  python ./serving/label-image.py ./serving/hodor.jpg
 
-  jon snow (score = 0.57979)
-  samwell tarley (score = 0.37689)
-  hodor (score = 0.03943)
-  robert baratheon (score = 0.00194)
-  theon greyjoy (score = 0.00118)
-  daenerys targaryen (score = 0.00033)
-  tyrion lannister (score = 0.00020)
-  cersei lannister (score = 0.00018)
-  drogon (score = 0.00004)
-  night king (score = 0.00003)
+  hodor (score = 0.98614)
+  samwell tarley (score = 0.01098)
+  tyrion lannister (score = 0.00151)
+  theon greyjoy (score = 0.00105)
+  jon snow (score = 0.00020)
+  robert baratheon (score = 0.00008)
+  drogon (score = 0.00002)
+  night king (score = 0.00001)
+  daenerys targaryen (score = 0.00000)
+  cersei lannister (score = 0.00000)
   ```
 
+* TF Serving
+
+  ```bash
+  docker run -d --rm --name serving_base tensorflow/serving:1.13.0
+  docker cp ./tf-output/saved_models serving_base:/models/inception
+  docker commit --change "ENV MODEL_NAME inception" serving_base chzbrgr71/got_serving:1.0
+  docker kill serving_base
+  docker run -p 8500:8500 --name serving -t chzbrgr71/got_serving:1.0 &
+
+  python serving/inception_client.py --server localhost:8500 --image ./serving/hodor.jpg
+  python serving/inception_client.py --server localhost:8500 --image ./serving/tyrion.jpg
+  python serving/inception_client.py --server localhost:8500 --image ./serving/night-king.jpg
+  ```
+
+  ```bash
+  docker run -d --name serving \
+    --publish 8500:8500 \
+    --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification/tf-output/saved_models:/models/inception \
+    --env MODEL_NAME=inception \
+  tensorflow/serving:1.13.0
+  ```
+
+  ```bash
+  kubectl apply -f ./k8s/serving.yaml
+
+  python serving/inception_client.py --server 23.96.109.181:8500 --image ./serving/night-king.jpg
+  ```
 
 ### Export model
 

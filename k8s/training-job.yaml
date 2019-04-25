@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
       - name: image-class-training
-        image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.13
+        image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.141
         args:                
           - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
           - "--model_dir=/tmp/tensorflow/inception"

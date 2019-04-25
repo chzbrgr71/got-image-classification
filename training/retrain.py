@@ -852,8 +852,8 @@ def main(_):
   # Merge all the summaries and write them out to /tmp/retrain_logs (by default)
   # add subdirectory with name of pod:
   # Setup the directory we'll write summaries to for TensorBoard
-  training_folder = os.getenv('KUBE_POD_NAME', "training_summaries")
-  new_tensorboard_path = FLAGS.summaries_dir + '/' + training_folder + '/training_summaries'
+  pod_name = os.getenv('KUBE_POD_NAME', "latest")
+  new_tensorboard_path = FLAGS.summaries_dir + '/training_summaries/' + pod_name
 
   if tf.gfile.Exists(new_tensorboard_path):
     tf.gfile.DeleteRecursively(new_tensorboard_path)
@@ -937,15 +937,21 @@ def main(_):
                             list(image_lists.keys())[predictions[i]]))
 
   # Write out the trained graph and labels with the weights stored as constants.
+  model_output_path = FLAGS.output_graph + '/latest_model/'
+
+  if tf.gfile.Exists(model_output_path):
+    tf.gfile.DeleteRecursively(model_output_path)
+  tf.gfile.MakeDirs(model_output_path)
+
   output_graph_def = graph_util.convert_variables_to_constants(
       sess, graph.as_graph_def(), [FLAGS.final_tensor_name])
-  with gfile.FastGFile(FLAGS.output_graph + '/' + training_folder + '/retrained_graph.pb', 'wb') as f:
+  with gfile.FastGFile(model_output_path + '/got_retrained_graph.pb', 'wb') as f:
     f.write(output_graph_def.SerializeToString())
-  with gfile.FastGFile(FLAGS.output_labels + '/' + training_folder + '/retrained_labels.txt', 'w') as f:
+  with gfile.FastGFile(model_output_path + '/got_retrained_labels.txt', 'w') as f:
     f.write('\n'.join(image_lists.keys()) + '\n')
   
-  model_output_path = FLAGS.saved_model_dir + '/' + training_folder + '/saved_models'
-  export_model(sess, image_lists.keys(), FLAGS.architecture, model_output_path)
+  export_path = model_output_path + '/exported_model/1'
+  export_model(sess, image_lists.keys(), FLAGS.architecture, export_path)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
