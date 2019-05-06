@@ -34,3 +34,4 @@ spec:
                 secretName: azure-file-secret
                 shareName: aksshare
                 readOnly: false
+#      tfReplicaType: MASTER

@@ -1,5 +1,5 @@
-FROM tensorflow/tensorflow:1.13.1
-#FROM tensorflow/tensorflow:1.13.1-gpu
+#FROM tensorflow/tensorflow:1.13.1
+FROM tensorflow/tensorflow:1.13.1-gpu
 
 WORKDIR /
 

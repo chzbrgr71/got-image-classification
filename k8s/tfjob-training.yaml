@@ -20,6 +20,9 @@ spec:
             - "--saved_model_dir=/tf-output"
             image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.5
             name: tensorflow
+            #resources:
+            #  limits:
+            #    nvidia.com/gpu: 1            
             volumeMounts:
             - mountPath: /tf-output
               name: azure-files

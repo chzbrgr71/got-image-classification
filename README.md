@@ -50,8 +50,8 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.141
-  export IMAGE_TAG=1.0-gpu
+  export IMAGE_TAG=1.5
+  export IMAGE_TAG=1.5-gpu
   export ACRNAME=briaracr
 
   # build/push (ACR or Docker)
@@ -69,7 +69,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 
 * Tensorboard local
   ```bash
-  export IMAGE_TAG=1.1
+  export IMAGE_TAG=1.5
   export ACRNAME=briaracr
 
   # build/push (ACR or Docker)
@@ -115,7 +115,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
     kubectl create secret generic azure-file-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY
     ```
 
-### Training in Kubernetes
+### Kubernetes Job
 
 * Kubernetes job
 
@@ -124,6 +124,46 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 
   kubectl apply -f ./k8s/tensorboard.yaml
   ```
+
+### Kubeflow
+
+* Install Kubeflow (I am using v0.5.0) https://www.kubeflow.org/docs/started/getting-started-k8s 
+
+  ```bash
+  export KFAPP=kf-app-got1
+  kfctl init ${KFAPP}
+  cd ${KFAPP}
+  kfctl generate all -V
+  kfctl apply all -V
+  ```
+
+* Validate Kubeflow
+
+  ```bash
+  kubectl -n kubeflow get  all
+  ```
+
+  Dashboard: http://168.62.172.254 
+
+* Execute TFJob
+
+  ```bash
+  kubectl apply -f ./k8s/tfjob-training.yaml
+  ```
+
+* Deploy Tensorboard
+
+  ```bash
+  kubectl apply -f ./k8s/tensorboard.yaml
+  ```
+
+* Pipelines
+
+https://www.kubeflow.org/docs/pipelines/pipelines-quickstart 
+
+http://168.62.172.254/_/pipeline-dashboard 
+
+
 
 ### Inference
 
@@ -170,9 +210,82 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   ```bash
   kubectl apply -f ./k8s/serving.yaml
 
-  python serving/inception_client.py --server 23.96.109.181:8500 --image ./serving/night-king.jpg
+  python serving/inception_client.py --server 13.82.58.65:8500 --image ./serving/night-king.jpg
   ```
 
-### Export model
+  ```bash
+  # https://www.tensorflow.org/tfx/serving/api_rest#classify_and_regress_api 
+  # https://stackoverflow.com/questions/51705349/consume-tensor-flow-serving-inception-model-using-java-client
+  # https://stackoverflow.com/questions/16918602/how-to-base64-encode-image-in-linux-bash-shell 
+  # Convert image: https://onlinepngtools.com/convert-png-to-base64
+
+  curl http://13.82.58.65:8501/v1/models/inception/versions/1/metadata
+
+  curl -X POST http://13.82.58.65:8501/v1/models/inception:predict -d "@./serving/request.json"
+  ```
+
+
+### Tensorflow Lite
+
+https://www.tensorflow.org/lite/convert 
+
+```bash
+IMAGE_SIZE=299
+tflite_convert \
+  --graph_def_file=./tf-output/latest_model/got_retrained_graph.pb \
+  --output_file=./tf-output/latest_model/optimized_graph.lite \
+  --input_format=TENSORFLOW_GRAPHDEF \
+  --output_format=TFLITE \
+  --input_shape=1,${IMAGE_SIZE},${IMAGE_SIZE},3 \
+  --input_array=Mul \
+  --output_array=final_result \
+  --inference_type=FLOAT \
+  --input_data_type=FLOAT
+```
+
+
+
+### Tensorflow.js
+
+This doesn't work at all: 
+
+```bash
+pip install tensorflowjs==0.8.5 --force-reinstall
+pip install tensorflowjs==1.0.1 --force-reinstall
+
+tensorflowjs_converter \
+    --input_format=tf_saved_model \
+    --output_format=tfjs_graph_model \
+    --skip_op_check SKIP_OP_CHECK \
+    ./tf-output/latest_model/got_retrained_graph.pb \
+    ./tf-output/javascript
+
+tensorflowjs_converter \
+    --input_format=tf_saved_model \
+    --output_format=tfjs_graph_model \
+    --skip_op_check SKIP_OP_CHECK \
+    ./tf-output/latest_model/exported_model/1 \
+    ./tf-output/javascript
+
+    --output_node_names='final_result' \
+```
+
+### Links
+
+https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/#0 
+
+https://www.tensorflow.org/lite/guide/get_started 
+
+https://heartbeat.fritz.ai/intro-to-machine-learning-on-android-how-to-convert-a-custom-model-to-tensorflow-lite-e07d2d9d50e3 
 
 https://www.tensorflow.org/js/tutorials/conversion/import_keras#alternative_use_the_python_api_to_export_directly_to_tfjs_layers_format 
+
+https://becominghuman.ai/creating-restful-api-to-tensorflow-models-c5c57b692c10 
+
+https://codelabs.developers.google.com/codelabs/tensorflowjs-teachablemachine-codelab/index.html#0 
+
+https://www.tensorflow.org/hub/tutorials/image_retraining 
+
+https://medium.com/codait/bring-machine-learning-to-the-browser-with-tensorflow-js-part-iii-62d2b09b10a3 
+
+https://github.com/vabarbosa/tfjs-model-playground/tree/master/image-segmenter/demo 
