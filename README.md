@@ -7,6 +7,7 @@ This is demo code for my talk at [GlueCon 2019](http://gluecon.com).
 ### Game of Thrones Characters
 
 From: https://gameofthrones.fandom.com 
+JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/data/characters.json 
 
 * Robert Baratheon (robert-baratheon)
 * Tyrion Lannister (tyrion-lannister)
