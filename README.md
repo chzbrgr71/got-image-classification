@@ -114,6 +114,11 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
     echo Storage account key: $STORAGE_KEY
 
     kubectl create secret generic azure-file-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY
+
+    kubectl create secret generic azure-file-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY -n kubeflow
+
+    # Add persistent volume
+    kubectl apply -f ./k8s/persistent-volume.yaml
     ```
 
 ### Kubernetes Job
@@ -158,13 +163,26 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   kubectl apply -f ./k8s/tensorboard.yaml
   ```
 
-* Pipelines
+* [Kubeflow Pipelines](https://www.kubeflow.org/docs/pipelines/pipelines-quickstart)
 
-https://www.kubeflow.org/docs/pipelines/pipelines-quickstart 
+  * Local Kubeflow Dashboard: http://168.62.172.254/_/pipeline-dashboard 
+  * Create a clean Python 3 environment
 
-http://168.62.172.254/_/pipeline-dashboard 
+    ```bash
+    conda create --name mlpipeline python=3.7
+    source activate mlpipeline
+    pip install -r ./pipelines/requirements.txt --upgrade
+    ```
 
+  * Compile pipeline
 
+    ```bash
+    python3 ./pipelines/pipeline.py
+    ```
+  
+  * For now, there are a couple edits needed on the pipeline.yaml
+    * environment variables
+    * volumes for Azure files
 
 ### Inference
 
@@ -222,7 +240,7 @@ http://168.62.172.254/_/pipeline-dashboard
 
   curl http://13.82.58.65:8501/v1/models/inception/versions/1/metadata
 
-  curl -X POST http://13.82.58.65:8501/v1/models/inception:predict -d "@./serving/request.json"
+  curl -X POST http://13.82.58.65:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   ```
 
 
@@ -230,46 +248,74 @@ http://168.62.172.254/_/pipeline-dashboard
 
 https://www.tensorflow.org/lite/convert 
 
-```bash
-IMAGE_SIZE=299
-tflite_convert \
-  --graph_def_file=./tf-output/latest_model/got_retrained_graph.pb \
-  --output_file=./tf-output/latest_model/optimized_graph.lite \
-  --input_format=TENSORFLOW_GRAPHDEF \
-  --output_format=TFLITE \
-  --input_shape=1,${IMAGE_SIZE},${IMAGE_SIZE},3 \
-  --input_array=Mul \
-  --output_array=final_result \
-  --inference_type=FLOAT \
-  --input_data_type=FLOAT
-```
+  ```bash
+  IMAGE_SIZE=299
+  tflite_convert \
+    --graph_def_file=./tf-output/latest_model/got_retrained_graph.pb \
+    --output_file=./tf-output/latest_model/optimized_graph.lite \
+    --input_format=TENSORFLOW_GRAPHDEF \
+    --output_format=TFLITE \
+    --input_shape=1,${IMAGE_SIZE},${IMAGE_SIZE},3 \
+    --input_array=Mul \
+    --output_array=final_result \
+    --inference_type=FLOAT \
+    --input_data_type=FLOAT
+  ```
 
+### Convert
+
+  ```bash
+  export IMAGE_TAG=1.0
+  export ACRNAME=briaracr
+
+  # build/push (ACR or Docker)
+  az acr build -t chzbrgr71/tflite-convert:$IMAGE_TAG -r $ACRNAME -f ./convert/Dockerfile ./convert
+
+  docker build -t chzbrgr71/tflite-convert:$IMAGE_TAG -f ./convert/Dockerfile ./convert
+  docker push chzbrgr71/tflite-convert:$IMAGE_TAG
+
+  # run
+  docker run -d --name convert --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification/tf-output:/tf-output chzbrgr71/tflite-convert:$IMAGE_TAG \
+    --graph_def_file=./tf-output/latest_model/got_retrained_graph.pb \
+    --output_file=./tf-output/latest_model/optimized_graph.lite \
+    --input_format=TENSORFLOW_GRAPHDEF \
+    --output_format=TFLITE \
+    --input_shape=1,299,299,3 \
+    --input_array=Mul \
+    --output_array=final_result \
+    --inference_type=FLOAT \
+    --input_data_type=FLOAT
+  ```
+
+  ```bash
+  kubectl apply -f ./k8s/convert.yaml
+  ```
 
 
 ### Tensorflow.js
 
 This doesn't work at all: 
 
-```bash
-pip install tensorflowjs==0.8.5 --force-reinstall
-pip install tensorflowjs==1.0.1 --force-reinstall
+  ```bash
+  pip install tensorflowjs==0.8.5 --force-reinstall
+  pip install tensorflowjs==1.0.1 --force-reinstall
 
-tensorflowjs_converter \
-    --input_format=tf_saved_model \
-    --output_format=tfjs_graph_model \
-    --skip_op_check SKIP_OP_CHECK \
-    ./tf-output/latest_model/got_retrained_graph.pb \
-    ./tf-output/javascript
+  tensorflowjs_converter \
+      --input_format=tf_saved_model \
+      --output_format=tfjs_graph_model \
+      --skip_op_check SKIP_OP_CHECK \
+      ./tf-output/latest_model/got_retrained_graph.pb \
+      ./tf-output/javascript
 
-tensorflowjs_converter \
-    --input_format=tf_saved_model \
-    --output_format=tfjs_graph_model \
-    --skip_op_check SKIP_OP_CHECK \
-    ./tf-output/latest_model/exported_model/1 \
-    ./tf-output/javascript
+  tensorflowjs_converter \
+      --input_format=tf_saved_model \
+      --output_format=tfjs_graph_model \
+      --skip_op_check SKIP_OP_CHECK \
+      ./tf-output/latest_model/exported_model/1 \
+      ./tf-output/javascript
 
-    --output_node_names='final_result' \
-```
+      --output_node_names='final_result' \
+  ```
 
 ### Links
 

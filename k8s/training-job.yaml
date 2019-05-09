@@ -1,36 +1,34 @@
-apiVersion: kubeflow.org/v1beta2
-kind: TFJob
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: got-image-training
-  namespace: default
+  name: got-image-training-job
 spec:
-  tfReplicaSpecs:
-    Worker:
-      replicas: 1
-      template:
-        spec:
-          containers:
-          - args:
-            - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
-            - "--model_dir=/tmp/tensorflow/inception"
-            - "--summaries_dir=/tf-output"
-            - "--output_graph=/tf-output"
-            - "--output_labels=/tf-output"
-            - "--image_dir=/images"
-            - "--saved_model_dir=/tf-output"
-            image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.5
-            name: tensorflow
-            volumeMounts:
-            - mountPath: /tf-output
-              name: azure-files
-            env:
-            - name: KUBE_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name             
-          volumes:
-            - name: azure-files
-              azureFile:
-                secretName: azure-file-secret
-                shareName: aksshare
-                readOnly: false
+  template:
+    metadata:
+    spec:
+      containers:
+      - name: got-image-training-job
+        image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.5
+        args:                
+          - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
+          - "--model_dir=/tmp/tensorflow/inception"
+          - "--summaries_dir=/tf-output"
+          - "--output_graph=/tf-output"
+          - "--output_labels=/tf-output"
+          - "--image_dir=/images"
+          - "--saved_model_dir=/tf-output"
+        volumeMounts:
+        - mountPath: /tf-output
+          name: azure-files
+        env:
+        - name: KUBE_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name               
+      restartPolicy: Never     
+      volumes:
+        - name: azure-files
+          azureFile:
+            secretName: azure-file-secret
+            shareName: aksshare
+            readOnly: false 
