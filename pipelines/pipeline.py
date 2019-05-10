@@ -16,6 +16,9 @@ def got_image_pipeline(
 
     operations = {}
 
+    # preprocess images
+
+
     # train
     operations['train'] = dsl.ContainerOp(
         name='train',
@@ -34,6 +37,8 @@ def got_image_pipeline(
         ]
     )
 
+    # convert onnx
+
     # convert tflite
     operations['convert-tflite'] = dsl.ContainerOp(
         name='convert-tflite',
@@ -51,6 +56,8 @@ def got_image_pipeline(
         ]
     )    
     operations['convert-tflite'].after(operations['train'])
+
+    # copy models to external storage
 
     for _, op in operations.items():
         op.add_volume(

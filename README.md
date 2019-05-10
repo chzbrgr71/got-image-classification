@@ -35,24 +35,55 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   tensorflow/tensorflow:1.13.1
 
   python ./training/retrain.py \
-    --bottleneck_dir=/tmp/tensorflow/bottlenecks \
+    --bottleneck_dir=/got-image-classification/tf-output/bottlenecks \
     --model_dir=/tmp/tensorflow/inception \
     --summaries_dir=/got-image-classification/tf-output \
     --output_graph=/got-image-classification/tf-output \
     --output_labels=/got-image-classification/tf-output \
     --image_dir=/got-image-classification/training/images \
     --saved_model_dir=/got-image-classification/tf-output \
-    --how_many_training_steps 50
+    --how_many_training_steps 1000
+
+  python ./preprocess/processimages.py \
+    --bottleneck_dir=/got-image-classification/tf-output/bottlenecks \
+    --image_dir=/got-image-classification/preprocess/images 
+
+  # or conda
+  source activate tf
+
+  python ./training/retrain.py \
+    --bottleneck_dir=./tf-output/bottlenecks \
+    --model_dir=./tf-output/inception \
+    --summaries_dir=./tf-output \
+    --output_graph=./tf-output \
+    --output_labels=./tf-output \
+    --image_dir=./training/images \
+    --saved_model_dir=./tf-output \
+    --how_many_training_steps 2000  
 
   tensorboard --logdir=/got-image-classification/tf-output/training_summaries
   ```
 
-* Create container image
+* Create preprocess container image
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.5
-  export IMAGE_TAG=1.5-gpu
+  export IMAGE_TAG=1.51
+  export ACRNAME=briaracr
+
+  # build/push (ACR or Docker)
+  az acr build -t chzbrgr71/got-image-preprocess:$IMAGE_TAG -r $ACRNAME ./preprocess
+
+  docker build -t chzbrgr71/got-image-preprocess:$IMAGE_TAG -f ./preprocess/Dockerfile ./preprocess
+  docker push chzbrgr71/got-image-preprocess:$IMAGE_TAG
+  ```
+
+* Create training container image
+
+  ```bash
+  # set image tag depending on target cpu/gpu
+  export IMAGE_TAG=1.51
+  export IMAGE_TAG=1.51-gpu
   export ACRNAME=briaracr
 
   # build/push (ACR or Docker)
@@ -63,6 +94,10 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   ```
 
 * Run local
+
+  ```bash
+  docker run -d --name process --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification:/got-image-classification chzbrgr71/got-image-preprocess:$IMAGE_TAG "--bottleneck_dir=/got-image-classification/tf-output/bottlenecks" "--image_dir=/got-image-classification/preprocess/images"
+  ```
 
   ```bash
   docker run -d --name train --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification:/got-image-classification chzbrgr71/got-image-training:$IMAGE_TAG "--bottleneck_dir=/tmp/tensorflow/bottlenecks" "--model_dir=/tmp/tensorflow/inception" "--summaries_dir=/got-image-classification/tf-output/training_summaries/baseline" "--output_graph=/got-image-classification/tf-output/retrained_graph.pb" "--output_labels=/got-image-classification/tf-output/retrained_labels.txt" "--image_dir=/images" "--saved_model_dir=/got-image-classification/tf-output/saved_models/1"
@@ -126,7 +161,9 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 * Kubernetes job
 
   ```bash
-  kubectl apply -f ./k8s/training-job.yaml
+  kubectl apply -f ./k8s/job-preprocess.yaml
+
+  kubectl apply -f ./k8s/job-training.yaml
 
   kubectl apply -f ./k8s/tensorboard.yaml
   ```
@@ -289,6 +326,28 @@ https://www.tensorflow.org/lite/convert
 
   ```bash
   kubectl apply -f ./k8s/convert.yaml
+  ```
+
+  # ONNX
+
+  This doesn't work at all: 
+  
+  ```bash
+  source activate mlpipeline
+
+  python -m tf2onnx.convert \
+    --saved-model ./tf-output/latest_model/exported_model/1/ \
+    --output ./tf-output/onnx/model.onnx \
+    --verbose
+
+  python -m tf2onnx.convert \
+    --input ./tf-output/latest_model/got_retrained_graph.pb \
+    --inputs DecodeJpeg/contents:0 \
+    --outputs final_result:0 \
+    --output ./tf-output/onnx/model.onnx \
+    --verbose
+
+  saved_model_cli show --dir ./tf-output/latest_model/exported_model/1/ --tag_set serve --signature_def serving_default
   ```
 
 

@@ -73,6 +73,7 @@ import re
 import struct
 import sys
 import tarfile
+import time
 
 import numpy as np
 from six.moves import urllib
@@ -805,6 +806,8 @@ def export_model(sess, keys, architecture, saved_model_dir):
   builder.save()
 
 def main(_):
+  start = time.time()
+  
   # Set up the pre-trained graph.
   maybe_download_and_extract()
   graph, bottleneck_tensor, jpeg_data_tensor, resized_image_tensor = (
@@ -928,6 +931,7 @@ def main(_):
                  ground_truth_input: test_ground_truth})
   print('Final test accuracy = %.1f%% (N=%d)' % (
       test_accuracy * 100, len(test_bottlenecks)))
+  print("Ran in {} seconds".format(time.time()-start))
 
   if FLAGS.print_misclassified_test_images:
     print('=== MISCLASSIFIED TEST IMAGES ===')

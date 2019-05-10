@@ -1,22 +1,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: got-image-training-job
+  name: got-image-preprocess-job
 spec:
   template:
     metadata:
     spec:
       containers:
-      - name: got-image-training-job
-        image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.5
+      - name: got-image-preprocess-job
+        image: briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.51
         args:                
-          - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
-          - "--model_dir=/tmp/tensorflow/inception"
-          - "--summaries_dir=/tf-output"
-          - "--output_graph=/tf-output"
-          - "--output_labels=/tf-output"
+          - "--bottleneck_dir=/tf-output/bottlenecks"
           - "--image_dir=/images"
-          - "--saved_model_dir=/tf-output"
         volumeMounts:
         - mountPath: /tf-output
           name: azure-files
