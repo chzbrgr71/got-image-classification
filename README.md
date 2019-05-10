@@ -20,8 +20,6 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 * Drogon (drogon)
 * Night King (night-king)
 
-https://www.tensorflow.org/hub/tutorials/image_retraining
-
 ### Local testing/training
 
 * Testing in local Docker container interactively
@@ -109,7 +107,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   docker run -d --name score --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification:/got-image-classification chzbrgr71/got-model-scoring:$IMAGE_TAG '/got-image-classification/tf-output/latest_model'
   ```
 
-* Run local
+* Test local
 
   ```bash
   docker run -d --name process --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification:/got-image-classification chzbrgr71/got-image-preprocess:$IMAGE_TAG "--bottleneck_dir=/got-image-classification/tf-output/bottlenecks" "--image_dir=/got-image-classification/preprocess/images"
@@ -172,7 +170,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
     kubectl apply -f ./k8s/persistent-volume.yaml
     ```
 
-### Kubernetes Job
+### Kubernetes Jobs
 
 * Kubernetes job
 
@@ -216,9 +214,8 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   kubectl apply -f ./k8s/tensorboard.yaml
   ```
 
-* [Kubeflow Pipelines](https://www.kubeflow.org/docs/pipelines/pipelines-quickstart)
+* Kubeflow Pipelines
 
-  * Local Kubeflow Dashboard: http://168.62.172.254/_/pipeline-dashboard 
   * Create a clean Python 3 environment
 
     ```bash
@@ -237,6 +234,9 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   * For now, there are a couple edits needed on the pipeline.yaml
     * environment variables (KUBE_POD_NAME in training)
     * volumes for Azure files
+
+    ![Kubeflow Pipeline](img/pipeline.png "Kubeflow Pipeline")
+
 
 ### Inference
 
@@ -288,8 +288,6 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 
   ```bash
   # https://www.tensorflow.org/tfx/serving/api_rest#classify_and_regress_api 
-  # https://stackoverflow.com/questions/51705349/consume-tensor-flow-serving-inception-model-using-java-client
-  # https://stackoverflow.com/questions/16918602/how-to-base64-encode-image-in-linux-bash-shell 
   # Convert image: https://onlinepngtools.com/convert-png-to-base64
 
   curl http://13.82.58.65:8501/v1/models/inception/versions/1/metadata
@@ -300,7 +298,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 
 ### Tensorflow Lite
 
-https://www.tensorflow.org/lite/convert 
+* Convert
 
   ```bash
   IMAGE_SIZE=299
@@ -316,7 +314,7 @@ https://www.tensorflow.org/lite/convert
     --input_data_type=FLOAT
   ```
 
-### Convert
+* In container
 
   ```bash
   export IMAGE_TAG=1.0
@@ -345,9 +343,9 @@ https://www.tensorflow.org/lite/convert
   kubectl apply -f ./k8s/convert.yaml
   ```
 
-  # ONNX
+### ONNX
 
-  This doesn't work at all: 
+* This doesn't work at all: 
   
   ```bash
   source activate mlpipeline
@@ -381,7 +379,7 @@ https://www.tensorflow.org/lite/convert
 
 ### Tensorflow.js
 
-This doesn't work at all: 
+* This doesn't work at all: 
 
   ```bash
   pip install tensorflowjs==0.8.5 --force-reinstall
@@ -404,7 +402,7 @@ This doesn't work at all:
       --output_node_names='final_result' \
   ```
 
-### Links
+### Some Links
 
 https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/#0 
 
