@@ -11,21 +11,74 @@ spec:
       value: '0.01'
     - name: trainbatchsize
       value: '100'
-    - name: basepath
-      value: /tf-output
   entrypoint: gameofthrones
   serviceAccountName: pipeline-runner
   templates:
+  - container:
+      args:
+      - --graph_def_file
+      - /tf-output/latest_model/got_retrained_graph.pb
+      - --output_file
+      - /tf-output/latest_model/optimized_graph.lite
+      - --input_format
+      - TENSORFLOW_GRAPHDEF
+      - --output_format
+      - TFLITE
+      - --input_sedhape
+      - 1,299,299,3
+      - --input_array
+      - Mul
+      - --output_array
+      - final_result
+      - --inference_type
+      - FLOAT
+      - --input_data_type
+      - FLOAT
+      image: briaracr.azurecr.io/chzbrgr71/tflite-convert:1.0
+      volumeMounts:
+      - mountPath: /tf-output
+        name: azurefile
+    name: convert-tflite
+    outputs:
+      artifacts:
+      - name: mlpipeline-ui-metadata
+        path: /mlpipeline-ui-metadata.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-ui-metadata.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
+      - name: mlpipeline-metrics
+        path: /mlpipeline-metrics.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-metrics.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
   - dag:
       tasks:
       - dependencies:
-        - tensorboard
-        name: serve
-        template: serve
+        - train
+        name: convert-tflite
+        template: convert-tflite
       - dependencies:
         - train
-        name: tensorboard
-        template: tensorboard
+        name: onnx
+        template: onnx
+      - name: preprocess
+        template: preprocess
       - arguments:
           parameters:
           - name: learningrate
@@ -34,6 +87,8 @@ spec:
             value: '{{inputs.parameters.trainbatchsize}}'
           - name: trainingsteps
             value: '{{inputs.parameters.trainingsteps}}'
+        dependencies:
+        - preprocess
         name: train
         template: train
     inputs:
@@ -43,14 +98,19 @@ spec:
       - name: trainingsteps
     name: gameofthrones
   - container:
-      image: tensorflow/serving:1.13.0
-      env:
-        - name: MODEL_NAME
-          value: inception      
+      args:
+      - show
+      - --dir
+      - /tf-output/latest_model/exported_model/1/
+      - --tag_set
+      - serve
+      - --signature_def
+      - serving_default
+      image: briaracr.azurecr.io/chzbrgr71/onnx-convert:1.1
       volumeMounts:
       - mountPath: /tf-output
         name: azurefile
-    name: serve
+    name: onnx
     outputs:
       artifacts:
       - name: mlpipeline-ui-metadata
@@ -81,15 +141,15 @@ spec:
             name: mlpipeline-minio-artifact
   - container:
       args:
-      - --logdir
-      - /tf-output
-      command:
-      - /usr/local/bin/tensorboard
-      image: briaracr.azurecr.io/chzbrgr71/tensorboard:1.5
+      - --bottleneck_dir
+      - /tf-output/bottlenecks
+      - --image_dir
+      - /images
+      image: briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.51
       volumeMounts:
       - mountPath: /tf-output
         name: azurefile
-    name: tensorboard
+    name: preprocess
     outputs:
       artifacts:
       - name: mlpipeline-ui-metadata
@@ -140,10 +200,10 @@ spec:
       - '{{inputs.parameters.learningrate}}'
       - --train_batch_size
       - '{{inputs.parameters.trainbatchsize}}'
-      image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.5
+      image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.51
       env:
         - name: KUBE_POD_NAME
-          value: "{{workflow.uid}}"      
+          value: "{{workflow.uid}}"         
       volumeMounts:
       - mountPath: /tf-output
         name: azurefile

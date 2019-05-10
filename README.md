@@ -68,7 +68,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.51
+  export IMAGE_TAG=1.52
   export ACRNAME=briaracr
 
   # build/push (ACR or Docker)
@@ -218,7 +218,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
     ```
   
   * For now, there are a couple edits needed on the pipeline.yaml
-    * environment variables
+    * environment variables (KUBE_POD_NAME in training)
     * volumes for Azure files
 
 ### Inference
@@ -347,7 +347,18 @@ https://www.tensorflow.org/lite/convert
     --output ./tf-output/onnx/model.onnx \
     --verbose
 
-  saved_model_cli show --dir ./tf-output/latest_model/exported_model/1/ --tag_set serve --signature_def serving_default
+  saved_model_cli show --dir /got-image-classification/tf-output/latest_model/exported_model/1/ --tag_set serve --signature_def serving_default
+
+  export IMAGE_TAG=1.1
+  export ACRNAME=briaracr
+
+  # build/push (ACR or Docker)
+  az acr build -t chzbrgr71/onnx-convert:$IMAGE_TAG -r $ACRNAME -f ./onnx/Dockerfile ./onnx
+
+  docker build -t chzbrgr71/onnx-convert:$IMAGE_TAG -f ./onnx/Dockerfile ./onnx
+  docker push chzbrgr71/onnx-convert:$IMAGE_TAG
+
+  docker run -d --name onnx --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification:/got-image-classification chzbrgr71/onnx-convert:1.1 "show" "--dir" "/got-image-classification/tf-output/latest_model/exported_model/1/" "--tag_set" "serve" "--signature_def" "serving_default"
   ```
 
 

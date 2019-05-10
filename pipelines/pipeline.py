@@ -17,12 +17,19 @@ def got_image_pipeline(
     operations = {}
 
     # preprocess images
-
+    operations['preprocess'] = dsl.ContainerOp(
+        name='preprocess',
+        image='briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.52',
+        arguments=[
+            '--bottleneck_dir', "/tf-output/bottlenecks",
+            '--image_dir', '/images'
+        ]
+    )
 
     # train
     operations['train'] = dsl.ContainerOp(
         name='train',
-        image='briaracr.azurecr.io/chzbrgr71/got-image-training:1.5',
+        image='briaracr.azurecr.io/chzbrgr71/got-image-training:1.51',
         arguments=[
             '--bottleneck_dir', "/tmp/tensorflow/bottlenecks",
             '--model_dir', "/tmp/tensorflow/inception",
@@ -36,8 +43,20 @@ def got_image_pipeline(
             '--train_batch_size', trainbatchsize
         ]
     )
+    operations['train'].after(operations['preprocess'])
 
     # convert onnx
+    operations['onnx'] = dsl.ContainerOp(
+        name='onnx',
+        image='briaracr.azurecr.io/chzbrgr71/onnx-convert:1.1',
+        arguments=[
+            'show',
+            '--dir', '/tf-output/latest_model/exported_model/1/',
+            '--tag_set', 'serve',
+            '--signature_def', 'serving_default'
+        ]
+    )
+    operations['onnx'].after(operations['train'])
 
     # convert tflite
     operations['convert-tflite'] = dsl.ContainerOp(
@@ -58,6 +77,16 @@ def got_image_pipeline(
     operations['convert-tflite'].after(operations['train'])
 
     # copy models to external storage
+    operations['export-to-cloud'] = dsl.ContainerOp(
+        name='export-to-cloud',
+        image='alpine',
+        command=['cp'],
+        arguments=[
+            '/tf-output/latest_model/got_retrained_graph.pb', 
+            '/tf-output/latest_model/got_retrained_graph-latest.pb'
+        ]
+    )
+    operations['export-to-cloud'].after(operations['onnx']).after(operations['convert-tflite'])
 
     for _, op in operations.items():
         op.add_volume(

@@ -431,7 +431,12 @@ def cache_bottlenecks(sess, image_lists, image_dir, bottleneck_dir,
     Nothing.
   """
   how_many_bottlenecks = 0
-  ensure_dir_exists(bottleneck_dir)
+  #ensure_dir_exists(bottleneck_dir)
+
+  if tf.gfile.Exists(bottleneck_dir):
+    tf.gfile.DeleteRecursively(bottleneck_dir)
+  tf.gfile.MakeDirs(bottleneck_dir)
+
   for label_name, label_lists in image_lists.items():
     for category in ['training', 'testing', 'validation']:
       category_list = label_lists[category]

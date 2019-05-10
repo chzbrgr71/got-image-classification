@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
       - name: got-image-preprocess-job
-        image: briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.51
+        image: briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.52
         args:                
           - "--bottleneck_dir=/tf-output/bottlenecks"
           - "--image_dir=/images"

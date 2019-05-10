@@ -67,12 +67,62 @@ spec:
           secretKeySecret:
             key: secretkey
             name: mlpipeline-minio-artifact
+  - container:
+      args:
+      - /tf-output/latest_model/got_retrained_graph.pb
+      - /tf-output/latest_model/got_retrained_graph-latest.pb
+      command:
+      - cp
+      image: alpine
+      volumeMounts:
+      - mountPath: /tf-output
+        name: azurefile
+    name: export-to-cloud
+    outputs:
+      artifacts:
+      - name: mlpipeline-ui-metadata
+        path: /mlpipeline-ui-metadata.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-ui-metadata.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
+      - name: mlpipeline-metrics
+        path: /mlpipeline-metrics.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-metrics.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
   - dag:
       tasks:
       - dependencies:
         - train
         name: convert-tflite
         template: convert-tflite
+      - dependencies:
+        - convert-tflite
+        - onnx
+        name: export-to-cloud
+        template: export-to-cloud
+      - dependencies:
+        - train
+        name: onnx
+        template: onnx
+      - name: preprocess
+        template: preprocess
       - arguments:
           parameters:
           - name: learningrate
@@ -81,6 +131,8 @@ spec:
             value: '{{inputs.parameters.trainbatchsize}}'
           - name: trainingsteps
             value: '{{inputs.parameters.trainingsteps}}'
+        dependencies:
+        - preprocess
         name: train
         template: train
     inputs:
@@ -89,6 +141,87 @@ spec:
       - name: trainbatchsize
       - name: trainingsteps
     name: gameofthrones
+  - container:
+      args:
+      - show
+      - --dir
+      - /tf-output/latest_model/exported_model/1/
+      - --tag_set
+      - serve
+      - --signature_def
+      - serving_default
+      image: briaracr.azurecr.io/chzbrgr71/onnx-convert:1.1
+      volumeMounts:
+      - mountPath: /tf-output
+        name: azurefile
+    name: onnx
+    outputs:
+      artifacts:
+      - name: mlpipeline-ui-metadata
+        path: /mlpipeline-ui-metadata.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-ui-metadata.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
+      - name: mlpipeline-metrics
+        path: /mlpipeline-metrics.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-metrics.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
+  - container:
+      args:
+      - --bottleneck_dir
+      - /tf-output/bottlenecks
+      - --image_dir
+      - /images
+      image: briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.52
+      volumeMounts:
+      - mountPath: /tf-output
+        name: azurefile
+    name: preprocess
+    outputs:
+      artifacts:
+      - name: mlpipeline-ui-metadata
+        path: /mlpipeline-ui-metadata.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-ui-metadata.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
+      - name: mlpipeline-metrics
+        path: /mlpipeline-metrics.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-metrics.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
   - container:
       args:
       - --bottleneck_dir
@@ -111,10 +244,10 @@ spec:
       - '{{inputs.parameters.learningrate}}'
       - --train_batch_size
       - '{{inputs.parameters.trainbatchsize}}'
-      image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.5
+      image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.51
       env:
         - name: KUBE_POD_NAME
-          value: "{{workflow.uid}}"          
+          value: "{{workflow.uid}}"      
       volumeMounts:
       - mountPath: /tf-output
         name: azurefile
