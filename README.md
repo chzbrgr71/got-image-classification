@@ -93,6 +93,22 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   docker push chzbrgr71/got-image-training:$IMAGE_TAG
   ```
 
+* Create scoring container image
+
+  ```bash
+  # set image tag depending on target cpu/gpu
+  export IMAGE_TAG=1.0
+  export ACRNAME=briaracr
+
+  # build/push (ACR or Docker)
+  az acr build -t chzbrgr71/got-model-scoring:$IMAGE_TAG -r $ACRNAME ./serving
+
+  docker build -t chzbrgr71/got-model-scoring:$IMAGE_TAG -f ./serving/Dockerfile ./serving
+  docker push chzbrgr71/got-model-scoring:$IMAGE_TAG
+
+  docker run -d --name score --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification:/got-image-classification chzbrgr71/got-model-scoring:$IMAGE_TAG '/got-image-classification/tf-output/latest_model'
+  ```
+
 * Run local
 
   ```bash
@@ -214,6 +230,7 @@ https://www.tensorflow.org/hub/tutorials/image_retraining
   * Compile pipeline
 
     ```bash
+    source activate mlpipeline
     python3 ./pipelines/pipeline.py
     ```
   

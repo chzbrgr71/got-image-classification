@@ -45,6 +45,16 @@ def got_image_pipeline(
     )
     operations['train'].after(operations['preprocess'])
 
+    # score model
+    operations['score'] = dsl.ContainerOp(
+        name='score',
+        image='briaracr.azurecr.io/chzbrgr71/got-model-scoring:1.0',
+        arguments=[
+            '/tf-output/latest_model'
+        ]
+    )
+    operations['score'].after(operations['train'])
+
     # convert onnx
     operations['onnx'] = dsl.ContainerOp(
         name='onnx',
@@ -56,7 +66,7 @@ def got_image_pipeline(
             '--signature_def', 'serving_default'
         ]
     )
-    operations['onnx'].after(operations['train'])
+    operations['onnx'].after(operations['score'])
 
     # convert tflite
     operations['convert-tflite'] = dsl.ContainerOp(
@@ -74,7 +84,7 @@ def got_image_pipeline(
             '--input_data_type', 'FLOAT'
         ]
     )    
-    operations['convert-tflite'].after(operations['train'])
+    operations['convert-tflite'].after(operations['score'])
 
     # copy models to external storage
     operations['export-to-cloud'] = dsl.ContainerOp(
