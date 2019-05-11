@@ -1,0 +1,64 @@
+apiVersion: "kubeflow.org/v1alpha1"
+kind: StudyJob
+metadata:
+  namespace: kubeflow
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: got-hyperparams
+spec:
+  studyName: got-hyperparams
+  owner: crd
+  optimizationtype: maximize
+  objectivevaluename: Validation-accuracy
+  optimizationgoal: 0.99
+  requestcount: 4
+  metricsnames:
+    - accuracy
+  parameterconfigs:
+    - name: --learning_rate
+      parametertype: double
+      feasible:
+        min: "0.001"
+        max: "1.0"
+    - name: --train_batch_size
+      parametertype: int
+      feasible:
+        min: "25"
+        max: "100"
+    - name: --how_many_training_steps
+      parametertype: int
+      feasible:
+        min: "1000"
+        max: "5000"
+  workerSpec:
+    goTemplate:
+        rawTemplate: |-
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: {{.WorkerID}}
+            namespace: kubeflow
+          spec:
+            template:
+              spec:
+                containers:
+                - name: {{.WorkerID}}
+                  image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.51
+                  args:                
+                    - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
+                    - "--model_dir=/tmp/tensorflow/inception"
+                    - "--summaries_dir=/tf-output"
+                    - "--output_graph=/tf-output"
+                    - "--output_labels=/tf-output"
+                    - "--image_dir=/images"
+                    - "--saved_model_dir=/tf-output"
+                  volumeMounts:
+                  - mountPath: /tf-output
+                    name: azure-files
+                  env:
+                  - name: KUBE_POD_NAME
+                    value: {{.WorkerID}}
+                restartPolicy: Never
+  suggestionSpec:
+    suggestionAlgorithm: "random"
+    requestNumber: 3

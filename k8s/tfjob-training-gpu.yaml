@@ -1,0 +1,39 @@
+apiVersion: kubeflow.org/v1beta2
+kind: TFJob
+metadata:
+  name: got-image-training-gpu
+  namespace: default
+spec:
+  tfReplicaSpecs:
+    Worker:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - args:
+            - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
+            - "--model_dir=/tmp/tensorflow/inception"
+            - "--summaries_dir=/tf-output"
+            - "--output_graph=/tf-output"
+            - "--output_labels=/tf-output"
+            - "--image_dir=/images"
+            - "--saved_model_dir=/tf-output"
+            image: chzbrgr71/got-image-training:1.51-gpu
+            name: tensorflow
+            resources:
+              limits:
+              nvidia.com/gpu: 1            
+            volumeMounts:
+            - mountPath: /tf-output
+              name: azure-files
+            env:
+            - name: KUBE_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name             
+          volumes:
+            - name: azure-files
+              azureFile:
+                secretName: azure-file-secret
+                shareName: aksshare
+                readOnly: false

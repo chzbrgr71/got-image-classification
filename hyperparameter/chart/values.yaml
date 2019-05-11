@@ -1,0 +1,11 @@
+image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.51
+useGPU: false
+hyperParamValues:
+  learning_rate:
+    - 0.001
+    - 0.01
+    - 1.0
+  train_batch_size:
+    - 25
+    - 50
+    - 100

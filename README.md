@@ -135,6 +135,8 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 ### Kubernetes Setup
 
 * Create Azure Kubernetes Service
+  * Add Virtual Node add-on
+  * Enable GPU's if desired. https://docs.microsoft.com/en-us/azure/aks/gpu-cluster 
 
 * Storage (Azure Files Static)
 
@@ -142,8 +144,8 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
     ```bash
     export AKS_PERS_STORAGE_ACCOUNT_NAME=briar$RANDOM
-    export AKS_PERS_RESOURCE_GROUP=briar-aks-ml-200
-    export AKS_PERS_LOCATION=eastus
+    export AKS_PERS_RESOURCE_GROUP=briar-aks-ml-201
+    export AKS_PERS_LOCATION=centralus
     export AKS_PERS_SHARE_NAME=aksshare
 
     # Create the storage account
@@ -187,7 +189,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 * Install Kubeflow (I am using v0.5.0) https://www.kubeflow.org/docs/started/getting-started-k8s 
 
   ```bash
-  export KFAPP=kf-app-got1
+  export KFAPP=kf-app-got2
   kfctl init ${KFAPP}
   cd ${KFAPP}
   kfctl generate all -V
@@ -197,7 +199,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 * Validate Kubeflow
 
   ```bash
-  kubectl -n kubeflow get  all
+  kubectl -n kubeflow get all
   ```
 
   Dashboard: http://168.62.172.254 
@@ -205,7 +207,11 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 * Execute TFJob
 
   ```bash
+  # cpu
   kubectl apply -f ./k8s/tfjob-training.yaml
+
+  # gpu
+  kubectl apply -f ./k8s/tfjob-training-gpu.yaml
   ```
 
 * Deploy Tensorboard
@@ -231,12 +237,25 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
     python3 ./pipelines/pipeline.py
     ```
   
-  * For now, there are a couple edits needed on the pipeline.yaml
+  * For now, there are a couple manual edits needed on the pipeline.yaml
     * environment variables (KUBE_POD_NAME in training)
     * volumes for Azure files
 
     ![Kubeflow Pipeline](img/pipeline.png "Kubeflow Pipeline")
 
+  * katib
+
+    ```bash
+    kubectl apply -f ./katib/got.yaml
+    ```
+
+### Hyperparameter Optimization
+
+  * Using Helm chart and AKS Virtual Nodes with GPU:
+
+  ```bash
+  helm install --name hyperparam ./hyperparameter/chart
+  ```
 
 ### Inference
 
@@ -261,23 +280,17 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 * TF Serving
 
   ```bash
-  docker run -d --rm --name serving_base tensorflow/serving:1.13.0
-  docker cp ./tf-output/saved_models serving_base:/models/inception
-  docker commit --change "ENV MODEL_NAME inception" serving_base chzbrgr71/got_serving:1.0
-  docker kill serving_base
-  docker run -p 8500:8500 --name serving -t chzbrgr71/got_serving:1.0 &
-
-  python serving/inception_client.py --server localhost:8500 --image ./serving/hodor.jpg
-  python serving/inception_client.py --server localhost:8500 --image ./serving/tyrion.jpg
-  python serving/inception_client.py --server localhost:8500 --image ./serving/night-king.jpg
-  ```
-
-  ```bash
   docker run -d --name serving \
     --publish 8500:8500 \
     --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification/tf-output/saved_models:/models/inception \
     --env MODEL_NAME=inception \
   tensorflow/serving:1.13.0
+  ```
+
+  ```bash
+  python serving/inception_client.py --server localhost:8500 --image ./serving/hodor.jpg
+  python serving/inception_client.py --server localhost:8500 --image ./serving/tyrion.jpg
+  python serving/inception_client.py --server localhost:8500 --image ./serving/night-king.jpg
   ```
 
   ```bash
@@ -287,10 +300,10 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
   ```
 
   ```bash
-  # https://www.tensorflow.org/tfx/serving/api_rest#classify_and_regress_api 
-  # Convert image: https://onlinepngtools.com/convert-png-to-base64
-
+  # serving api metadata
   curl http://13.82.58.65:8501/v1/models/inception/versions/1/metadata
+  
+  # convert image to base64: https://onlinepngtools.com/convert-png-to-base64
 
   curl -X POST http://13.82.58.65:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   ```
@@ -298,7 +311,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
 ### Tensorflow Lite
 
-* Convert
+* Convert model
 
   ```bash
   IMAGE_SIZE=299

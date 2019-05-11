@@ -1,0 +1,70 @@
+# first we copy the values of values.yaml in variable to make it easier to access them
+{{- $lrlist := .Values.hyperParamValues.learning_rate -}}
+{{- $batchsizelist := .Values.hyperParamValues.train_batch_size -}}
+{{- $image := .Values.image -}}
+{{- $useGPU := .Values.useGPU -}}
+{{- $chartname := .Chart.Name -}}
+{{- $chartversion := .Chart.Version -}}
+
+# then we loop over every value of $lrlist (learning rate) and $batchsize (train batch size)
+# this will result in create 1 TFJob for every pair of learning rate and train batch size
+{{- range $i, $lr := $lrlist }}
+{{- range $j, $batchsize := $batchsizelist }}
+apiVersion: kubeflow.org/v1beta2
+kind: TFJob
+metadata:
+  name: got-hyperparam-{{ $i }}-{{ $j }} # we give a unique name to each training
+  namespace: default
+  labels:
+    chart: "{{ $chartname }}-{{ $chartversion | replace "+" "_" }}"  
+spec:
+  tfReplicaSpecs:
+    Worker:
+      replicas: 1
+      template:  
+        spec:
+          containers:
+          - args:
+                # here we pass a unique learning rate and batch size to each instance.
+                - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
+                - "--model_dir=/tmp/tensorflow/inception"
+                - "--summaries_dir=/tf-output"
+                - "--output_graph=/tmp/tensorflow"
+                - "--output_labels=/tmp/tensorflow"
+                - "--image_dir=/images"
+                - "--saved_model_dir=/tmp/tensorflow"
+                - "--learning_rate"
+                - {{ $lr | quote }}
+                - "--train_batch_size"
+                - {{ $batchsize | quote }}
+            image: {{ $image }}
+            name: tensorflow
+            #resources:
+            #  limits:
+            #    nvidia.com/gpu: 1            
+            volumeMounts:
+            - mountPath: /tf-output
+              name: azure-files
+            env:
+            - name: KUBE_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name             
+          volumes:
+            - name: azure-files
+              azureFile:
+                secretName: azure-file-secret
+                shareName: aksshare
+                readOnly: false
+          nodeSelector: # for VK
+            kubernetes.io/role: agent
+            beta.kubernetes.io/os: linux
+            type: virtual-kubelet
+          tolerations: # for VK
+          - key: virtual-kubelet.io/provider
+            operator: Exists
+          - key: azure.com/aci
+            effect: NoSchedule                
+---
+{{- end }}
+{{- end }}                
