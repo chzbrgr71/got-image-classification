@@ -1,0 +1,53 @@
+[
+  {
+    "id": 0,
+    "characterName": "Samwell Tarly",
+    "characterImageFull": "/public/img/characters/samwell_tarly.jpg"
+  },
+  {
+    "id": 1,
+    "characterName": "The Night King",
+    "characterImageFull": "/public/img/characters/night_king.jpg"
+  },
+  {
+    "id": 2,
+    "characterName": "Daenerys Targaryen",
+    "characterImageFull": "/public/img/characters/daenerys_targaryen.jpg"
+  },
+  {
+    "id": 3,
+    "characterName": "Robert Baratheon",
+    "houseName": "Baratheon",
+    "characterImageFull": "/public/img/characters/robert_baratheon.jpg"
+  },
+  {
+    "id": 4,
+    "characterName": "Drogon",
+    "characterImageFull": "/public/img/characters/drogon.jpg"
+  },
+  {
+    "id": 5,
+    "characterName": "Cersei Lannister",
+    "characterImageFull": "/public/img/characters/cersei_lannister.jpg"
+  },
+  {
+    "id": 6,
+    "characterName": "Hodor",
+    "characterImageFull": "/public/img/characters/hodor.jpg"
+  },
+  {
+    "id": 7,
+    "characterName": "Theon Greyjoy",
+    "characterImageFull":  "/public/img/characters/theon_greyjoy.jpg"
+  },
+  {
+    "id": 8,
+    "characterName": "Jon Snow",
+    "characterImageFull":  "/public/img/characters/jon_snow.jpg"
+  },
+  {
+    "id": 9,
+    "characterName": "Tyrion Lannister",
+    "characterImageFull":  "/public/img/characters/tyrion_lannister.jpg"
+  }
+]

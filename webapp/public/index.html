@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Game of Thrones :: TF AKS Demo" />
+    <title>When you play the game of thrones, you win or you die</title>
+    <link
+      rel="apple-touch-icon"
+      sizes="57x57"
+      href="/public/apple-icon-57x57.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="60x60"
+      href="/public/apple-icon-60x60.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="72x72"
+      href="/public/apple-icon-72x72.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="76x76"
+      href="/public/apple-icon-76x76.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="114x114"
+      href="/public/apple-icon-114x114.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="120x120"
+      href="/public/apple-icon-120x120.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="144x144"
+      href="/public/apple-icon-144x144.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="152x152"
+      href="/public/apple-icon-152x152.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/public/apple-icon-180x180.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/public/android-icon-192x192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/public/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="96x96"
+      href="/public/favicon-96x96.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/public/favicon-16x16.png"
+    />
+    <link rel="manifest" href="/public/manifest.json" />
+    <meta name="msapplication-TileColor" content="#ffffff" />
+    <meta
+      name="msapplication-TileImage"
+      content="/public/ms-icon-144x144.png"
+    />
+    <meta name="theme-color" content="#ffffff" />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/purecss@1.0.0/build/pure-min.css"
+      integrity="sha384-"
+      crossorigin="anonymous"
+    />
+
+    <!--[if lte IE 8]>
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/purecss@1.0.0/build/grids-responsive-old-ie-min.css"
+      />
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/purecss@1.0.0/build/grids-responsive-min.css"
+    />
+    <!--<![endif]-->
+
+    <link
+      rel="stylesheet"
+      href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css"
+    />
+    <link rel="stylesheet" href="public/css/layouts/GameofThrones.css" />
+    <!--[if lte IE 8]>
+      <link rel="stylesheet" href="css/layouts/marketing-old-ie.css" />
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="public/css/layouts/marketing.css" />
+    <!--<![endif]-->
+  </head>
+  <body>
+    <div class="header">
+      <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
+        <a class="pure-menu-heading" href=""
+          ><img src="public/img/got-logo.png" width="361px"
+        /></a>
+      </div>
+    </div>
+
+    <div class="splash-container" id="photoChoice">
+      <div class="splash">
+        <h1 class="splash-head">GoT or NoT</h1>
+        <p class="splash-subhead">
+          Upload a photo to take the test
+        </p>
+        <form action="/upload" class="dropzone dz-clickable" id="dzUpload">
+          <div class="dz-default dz-message">
+            <span class="pure-button button-secondary button-xlarge"
+              >SELECT A PHOTO</span
+            >
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="splash-container-results" id="photoResults">
+      <div class="splash">
+        <h1 class="headResults">Your Results</h1>
+        <div class="compImage">
+          <div class="image-cropper">
+            <img id="srcImage" class="pic-compare" width="150px" />
+          </div>
+          <p><span>Your Upload</span></p>
+        </div>
+        <div class="compImage">
+          <div class="image-cropper">
+            <img id="resImage" class="pic-compare" width="150px" />
+          </div>
+          <p><span id="resName"></span></p>
+          <p><span id="resPct"></span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="footer l-box is-center">
+        <i class="fa fa-github-alt fa-lg"></i> Github Repo
+      </div>
+    </div>
+
+    <script src="public/js/dropzone.js"></script>
+    <script>
+      Dropzone.options.dzUpload = {
+        paramName: "file", // The name that will be used to transfer the file
+        maxFilesize: 2,
+        acceptedFiles: ".jpeg,.JPEG,.jpg,.JPG,.png,.PNG",
+        init: function() {
+          this.on("success", function(file, response) {
+            document.getElementById("photoChoice").style.visibility = "hidden";
+            document.getElementById("photoResults").style.visibility =
+              "visible";
+            document.getElementById("srcImage").src =
+              "data:image/png;base64, " + response.sourceImageBase64;
+            document.getElementById("resImage").src =
+              response.payload.characterImageFull;
+            document.getElementById("resName").innerHTML =
+              response.payload.characterName;
+            document.getElementById("resPct").innerHTML =
+              response.percentage.toString() + " %";
+            console.log(response);
+          });
+        }
+      };
+    </script>
+  </body>
+</html>
