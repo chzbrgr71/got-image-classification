@@ -1,4 +1,4 @@
-image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.51
+image: chzbrgr71/got-image-training:1.51
 useGPU: false
 hyperParamValues:
   learning_rate:

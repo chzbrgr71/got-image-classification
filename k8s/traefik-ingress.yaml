@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: notebooks
+  namespace: kubeflow
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: jupyter.brianredmond.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: brian-testing-01
+          servicePort: 80

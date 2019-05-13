@@ -38,3 +38,8 @@ spec:
       nodeSelector:
         beta.kubernetes.io/os: linux
         accelerator: nvidia
+      tolerations:
+      - key: "sku"
+        operator: "Equal"
+        value: "gpu"
+        effect: "NoSchedule"  

@@ -39,9 +39,9 @@ spec:
                 - {{ $batchsize | quote }}
             image: {{ $image }}
             name: tensorflow
-            #resources:
-            #  limits:
-            #    nvidia.com/gpu: 1            
+            resources:
+              limits:
+              nvidia.com/gpu: 1            
             volumeMounts:
             - mountPath: /tf-output
               name: azure-files
@@ -54,17 +54,8 @@ spec:
             - name: azure-files
               azureFile:
                 secretName: azure-file-secret
-                shareName: aksshare
-                readOnly: false
-          nodeSelector: # for VK
-            kubernetes.io/role: agent
-            beta.kubernetes.io/os: linux
-            type: virtual-kubelet
-          tolerations: # for VK
-          - key: virtual-kubelet.io/provider
-            operator: Exists
-          - key: azure.com/aci
-            effect: NoSchedule                
+                shareName: hyperparam
+                readOnly: false             
 ---
 {{- end }}
 {{- end }}                

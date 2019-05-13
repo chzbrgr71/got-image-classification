@@ -1,14 +1,13 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: got-image-training-job
+  name: got-image-training-job-vk
 spec:
   template:
     metadata:
     spec:
       containers:
-      - name: got-image-training-job
-        #image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.51
+      - name: got-image-training-job-vk
         image: chzbrgr71/got-image-training:1.51
         args:                
           - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
@@ -33,3 +32,12 @@ spec:
             secretName: azure-file-secret
             shareName: aksshare
             readOnly: false 
+      nodeSelector: # for VK
+        kubernetes.io/role: agent
+        beta.kubernetes.io/os: linux
+        type: virtual-kubelet
+      tolerations: # for VK
+      - key: virtual-kubelet.io/provider
+        operator: Exists
+      - key: azure.com/aci
+        effect: NoSchedule               

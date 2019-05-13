@@ -135,17 +135,31 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 ### Kubernetes Setup
 
 * Create Azure Kubernetes Service
+
+  * Use node pools to add GPU nodes. https://docs.microsoft.com/en-us/azure/aks/use-multiple-node-pools 
   * Add Virtual Node add-on
-  * Enable GPU's if desired. https://docs.microsoft.com/en-us/azure/aks/gpu-cluster 
+
+    ```bash
+    export VK_RELEASE=virtual-kubelet-latest
+    export CHART_URL=https://github.com/virtual-kubelet/virtual-kubelet/raw/master/charts/$VK_RELEASE.tgz
+    helm install --name vk "$CHART_URL" -f ./k8s/vk-helm-values.yaml
+    ```
+
+  * Enable GPU's with daemonset. https://docs.microsoft.com/en-us/azure/aks/gpu-cluster 
+
+    ```bash
+    kubectl create namespace gpu-resources
+    kubectl apply -f ./k8s/nvidia-device-plugin-ds.yaml
+    ```
 
 * Storage (Azure Files Static)
 
-    Azure Files Docs: https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
+    > Azure Files Docs: https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
 
     ```bash
-    export AKS_PERS_STORAGE_ACCOUNT_NAME=briar$RANDOM
-    export AKS_PERS_RESOURCE_GROUP=briar-aks-ml-201
-    export AKS_PERS_LOCATION=centralus
+    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarml200
+    export AKS_PERS_RESOURCE_GROUP=briar-aks-kf-200
+    export AKS_PERS_LOCATION=eastus
     export AKS_PERS_SHARE_NAME=aksshare
 
     # Create the storage account
@@ -180,6 +194,8 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
   kubectl apply -f ./k8s/job-preprocess.yaml
 
   kubectl apply -f ./k8s/job-training.yaml
+  
+  kubectl apply -f ./k8s/job-training-vk.yaml
 
   kubectl apply -f ./k8s/tensorboard.yaml
   ```
@@ -189,7 +205,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 * Install Kubeflow (I am using v0.5.0) https://www.kubeflow.org/docs/started/getting-started-k8s 
 
   ```bash
-  export KFAPP=kf-app-got2
+  export KFAPP=kf-app-got-201
   kfctl init ${KFAPP}
   cd ${KFAPP}
   kfctl generate all -V
@@ -212,6 +228,15 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
   # gpu
   kubectl apply -f ./k8s/tfjob-training-gpu.yaml
+
+  # aci
+  kubectl apply -f ./k8s/tfjob-training-vk.yaml
+  ```
+
+* Deploy Serving 
+
+  ```bash
+  kubectl apply -f ./k8s/serving.yaml
   ```
 
 * Deploy Tensorboard
@@ -243,11 +268,18 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
     ![Kubeflow Pipeline](img/pipeline.png "Kubeflow Pipeline")
 
-  * katib
+
+### Jupyter Notebooks
+
+  * Via port-forward to notebook instance
 
     ```bash
-    kubectl apply -f ./katib/got.yaml
+    kubectl port-forward brian-testing-01-0 -n kubeflow 8888:8888
     ```
+
+    http://localhost:8888/notebook/kubeflow/brian-testing-01
+
+  * Access via Traefik ingress. http://jupyter.brianredmond.io/notebook/kubeflow/brian-testing-01 
 
 ### Hyperparameter Optimization
 
@@ -255,6 +287,16 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
   ```bash
   helm install --name hyperparam ./hyperparameter/chart
+
+  kubectl apply -f ./hyperparameter/tensorboard-hp.yaml
+  ```
+
+  * katib
+
+  ```bash
+  kubectl apply -f ./katib/random-example.yaml
+  
+  kubectl apply -f ./katib/got.yaml
   ```
 
 ### Inference
@@ -296,16 +338,17 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
   ```bash
   kubectl apply -f ./k8s/serving.yaml
 
-  python serving/inception_client.py --server 13.82.58.65:8500 --image ./serving/night-king.jpg
+  python serving/inception_client.py --server 13.82.100.255:8500 --image ./serving/night-king.jpg
+  python serving/inception_client.py --server gotserving.brianredmond.io:8500 --image ./serving/jon-snow.jpg
   ```
 
   ```bash
   # serving api metadata
-  curl http://13.82.58.65:8501/v1/models/inception/versions/1/metadata
+  curl http://gotserving.brianredmond.io:8501/v1/models/inception/versions/1/metadata
   
   # convert image to base64: https://onlinepngtools.com/convert-png-to-base64
 
-  curl -X POST http://13.82.58.65:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
+  curl -X POST http://gotserving.brianredmond.io:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   ```
 
 

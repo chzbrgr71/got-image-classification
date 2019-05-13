@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: got-image-training-job-vk
+spec:
+  template:
+    metadata:
+    spec:
+      containers:
+      - name: got-image-training-job-vk
+        image: chzbrgr71/got-image-training:1.51
+        args:                
+          - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
+          - "--model_dir=/tmp/tensorflow/inception"
+          - "--summaries_dir=/tmp/tensorflow"
+          - "--output_graph=/tmp/tensorflow"
+          - "--output_labels=/tmp/tensorflow"
+          - "--image_dir=/images"
+          - "--saved_model_dir=/tmp/tensorflow"           
+      restartPolicy: Never     
+      nodeSelector: # for VK
+        kubernetes.io/role: agent
+        beta.kubernetes.io/os: linux
+        type: virtual-kubelet
+      tolerations: # for VK
+      - key: virtual-kubelet.io/provider
+        operator: Exists
+      - key: azure.com/aci
+        effect: NoSchedule               
