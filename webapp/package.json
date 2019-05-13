@@ -1,0 +1,17 @@
+{
+  "name": "got_ml",
+  "version": "0.8.0",
+  "description": "GoT TF Azure Demo",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "author": "Joey Schluchter",
+  "license": "ISC",
+  "dependencies": {
+    "fastify": "^2.3.0",
+    "fastify-file-upload": "^1.0.0",
+    "fastify-static": "^2.4.0",
+    "node-fetch": "^2.5.0"
+  }
+}
