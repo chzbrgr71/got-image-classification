@@ -9,6 +9,7 @@ spec:
       containers:
       - name: got-image-training-job-vk
         image: chzbrgr71/got-image-training:1.51
+        command: ["python","retrain.py"]
         args:                
           - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
           - "--model_dir=/tmp/tensorflow/inception"

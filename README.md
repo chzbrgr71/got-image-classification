@@ -142,7 +142,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
     ```bash
     export VK_RELEASE=virtual-kubelet-latest
     export CHART_URL=https://github.com/virtual-kubelet/virtual-kubelet/raw/master/charts/$VK_RELEASE.tgz
-    helm install --name vk "$CHART_URL" -f ./k8s/vk-helm-values.yaml
+    helm install --name vk "$CHART_URL" --namespace kube-system -f ./vk-helm-values.yaml
     ```
 
   * Enable GPU's with daemonset. https://docs.microsoft.com/en-us/azure/aks/gpu-cluster 
@@ -157,8 +157,8 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
     > Azure Files Docs: https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
 
     ```bash
-    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarml200
-    export AKS_PERS_RESOURCE_GROUP=briar-aks-kf-200
+    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarml201
+    export AKS_PERS_RESOURCE_GROUP=briar-aks-kf-201
     export AKS_PERS_LOCATION=eastus
     export AKS_PERS_SHARE_NAME=aksshare
 
@@ -195,7 +195,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
   kubectl apply -f ./k8s/job-training.yaml
   
-  kubectl apply -f ./k8s/job-training-vk.yaml
+  kubectl apply -f ./k8s/job-training-vk2.yaml
 
   kubectl apply -f ./k8s/tensorboard.yaml
   ```
@@ -351,6 +351,24 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
   curl -X POST http://gotserving.brianredmond.io:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   ```
 
+  * Web App
+
+  ```bash
+  export IMAGE_TAG=1.21
+  export ACRNAME=briaracr
+
+  # build/push (ACR or Docker)
+  az acr build -t chzbrgr71/got-web-app:$IMAGE_TAG -r $ACRNAME ./webapp
+
+  docker build -t chzbrgr71/got-web-app:$IMAGE_TAG -f ./webapp/Dockerfile ./webapp
+  docker push chzbrgr71/got-web-app:$IMAGE_TAG
+
+  docker run -d --name web -p 3000:3000 -e ML_SERVING_ENDPOINT=http://gotserving.brianredmond.io:8501/v1/models/inception:predict chzbrgr71/got-web-app:$IMAGE_TAG
+
+  kubectl apply -f ./k8s/web.yaml
+
+  az webapp config appsettings set --name got-web -g game-of-thrones --settings ML_SERVING_ENDPOINT='http://gotserving.brianredmond.io:8501/v1/models/inception:predict'
+  ```
 
 ### Tensorflow Lite
 

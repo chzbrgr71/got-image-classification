@@ -22,9 +22,15 @@ spec:
     Worker:
       replicas: 1
       template:  
+        metadata:
+          annotations:
+            virtual-kubelet.io/gpu-type: K80 # for ACI GPU      
         spec:
           containers:
-          - args:
+          - name: tensorflow
+            image: {{ $image }}
+            command: ["python","retrain.py"]
+            args:
                 # here we pass a unique learning rate and batch size to each instance.
                 - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
                 - "--model_dir=/tmp/tensorflow/inception"
@@ -37,25 +43,32 @@ spec:
                 - {{ $lr | quote }}
                 - "--train_batch_size"
                 - {{ $batchsize | quote }}
-            image: {{ $image }}
-            name: tensorflow
             resources:
+{{ if $useGPU }}  # we only want to request GPUs if we asked for it in values.yaml with useGPU                
               limits:
-              nvidia.com/gpu: 1            
+                nvidia.com/gpu: 1
+{{ end }}         
             volumeMounts:
             - mountPath: /tf-output
               name: azure-files
             env:
             - name: KUBE_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name             
+              value: got-hyperparam-{{ $i }}-{{ $j }}  
           volumes:
             - name: azure-files
               azureFile:
                 secretName: azure-file-secret
                 shareName: hyperparam
-                readOnly: false             
+                readOnly: false
+          nodeSelector: # for VK
+            kubernetes.io/role: agent
+            beta.kubernetes.io/os: linux
+            type: virtual-kubelet
+          tolerations: # for VK
+          - key: virtual-kubelet.io/provider
+            operator: Exists
+          - key: azure.com/aci
+            effect: NoSchedule                          
 ---
 {{- end }}
 {{- end }}                

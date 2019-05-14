@@ -1,5 +1,5 @@
 image: chzbrgr71/got-image-training:1.51
-useGPU: false
+useGPU: true
 hyperParamValues:
   learning_rate:
     - 0.001

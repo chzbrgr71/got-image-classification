@@ -4,7 +4,8 @@
   "description": "GoT TF Azure Demo",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "container": "node server.js"
   },
   "author": "Joey Schluchter",
   "license": "ISC",

@@ -22,7 +22,7 @@ spec:
             name: tensorflow
             resources:
               limits:
-              nvidia.com/gpu: 1            
+                nvidia.com/gpu: 1            
             volumeMounts:
             - mountPath: /tf-output
               name: azure-files
