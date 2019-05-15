@@ -7,8 +7,8 @@ const fetch = require('node-fetch')
 
 console.log(gotCharacters)
 
-var servingEndpoint = process.env.ML_SERVING_ENDPOINT
-//servingEndpoint = "http://gotserving.brianredmond.io:8501/v1/models/inception:predict"
+//var servingEndpoint = process.env.ML_SERVING_ENDPOINT
+servingEndpoint = "http://gotserving.brianredmond.io:8501/v1/models/inception:predict"
 console.log("Tensorflow serving API: " + servingEndpoint)
 
 const fileUpload = require('fastify-file-upload')

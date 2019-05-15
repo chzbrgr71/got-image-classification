@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
       - name: got-image-training-job-vk
-        image: chzbrgr71/got-image-training:1.51
+        image: chzbrgr71/got-image-training:1.63
         command: ["python","retrain.py"]
         args:                
           - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"

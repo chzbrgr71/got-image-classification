@@ -8,6 +8,15 @@ This is demo code for my talk at [GlueCon 2019](http://gluecon.com).
 
 From: https://gameofthrones.fandom.com 
 JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/data/characters.json 
+Image downloader: https://chrome.google.com/webstore/detail/fatkun-batch-download-ima/nnjjahlikiabnchcpehcpkdeckfgnohf?hl=en 
+Image downloader: https://github.com/teracow/googliser 
+
+./googliser.sh -p "Benjen Stark" -f0 -N -b0
+./googliser.sh -p "Arya Stark" -f0 -N -b0
+./googliser.sh -p "Sansa Stark" -f0 -N -b0
+./googliser.sh -p "Jamie Lannister" -f0 -N -b0
+./googliser.sh -p "Margaery Tyrell game of thrones" -f0 -N -b0
+
 
 * Robert Baratheon (robert-baratheon)
 * Tyrion Lannister (tyrion-lannister)
@@ -17,8 +26,12 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 * Samwell Tarley (samwell-tarley)
 * Cersei Lannister (cersei-lannister)
 * Theon Greyjoy (theon-greyjoy)
-* Drogon (drogon)
 * Night King (night-king)
+* Arya Stark (arya-stark)
+* Benjen Stark (benjen-stark)
+* Jamie Lannister (jamie-lannister)
+* Margaery Tyrell (margaery-tyrell)
+* Sansa Stark (sansa-stark)
 
 ### Local testing/training
 
@@ -40,7 +53,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
     --output_labels=/got-image-classification/tf-output \
     --image_dir=/got-image-classification/training/images \
     --saved_model_dir=/got-image-classification/tf-output \
-    --how_many_training_steps 1000
+    --how_many_training_steps 2000
 
   python ./preprocess/processimages.py \
     --bottleneck_dir=/got-image-classification/tf-output/bottlenecks \
@@ -66,7 +79,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.52
+  export IMAGE_TAG=1.63
   export ACRNAME=briaracr
 
   # build/push (ACR or Docker)
@@ -80,8 +93,8 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.51
-  export IMAGE_TAG=1.51-gpu
+  export IMAGE_TAG=1.63
+  export IMAGE_TAG=1.63-gpu
   export ACRNAME=briaracr
 
   # build/push (ACR or Docker)
@@ -194,8 +207,6 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
   kubectl apply -f ./k8s/job-preprocess.yaml
 
   kubectl apply -f ./k8s/job-training.yaml
-  
-  kubectl apply -f ./k8s/job-training-vk2.yaml
 
   kubectl apply -f ./k8s/tensorboard.yaml
   ```
@@ -305,18 +316,21 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
   ```bash
   # testing
-  python ./serving/label-image.py ./serving/hodor.jpg
+  python ./serving/label-image.py ./serving/benjen.jpg
 
-  hodor (score = 0.98614)
-  samwell tarley (score = 0.01098)
-  tyrion lannister (score = 0.00151)
-  theon greyjoy (score = 0.00105)
-  jon snow (score = 0.00020)
-  robert baratheon (score = 0.00008)
-  drogon (score = 0.00002)
-  night king (score = 0.00001)
-  daenerys targaryen (score = 0.00000)
-  cersei lannister (score = 0.00000)
+  hodor (score = 0.35062)
+  benjen stark (score = 0.21019)
+  samwell tarley (score = 0.13798)
+  jon snow (score = 0.10155)
+  robert baratheon (score = 0.04643)
+  theon greyjoy (score = 0.04288)
+  daenerys targaryen (score = 0.03613)
+  tyrion lannister (score = 0.02663)
+  night king (score = 0.02428)
+  margaery tyrell (score = 0.00809)
+  cersei lannister (score = 0.00707)
+  arya stark (score = 0.00544)
+  sansa stark (score = 0.00271)
   ```
 
 * TF Serving
@@ -340,6 +354,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
 
   python serving/inception_client.py --server 13.82.100.255:8500 --image ./serving/night-king.jpg
   python serving/inception_client.py --server gotserving.brianredmond.io:8500 --image ./serving/jon-snow.jpg
+  python serving/inception_client.py --server gotserving.brianredmond.io:8500 --image ./serving/benjen.jpg
   ```
 
   ```bash
@@ -354,7 +369,7 @@ JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/
   * Web App
 
   ```bash
-  export IMAGE_TAG=1.21
+  export IMAGE_TAG=1.50
   export ACRNAME=briaracr
 
   # build/push (ACR or Docker)

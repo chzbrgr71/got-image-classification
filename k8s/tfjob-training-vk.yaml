@@ -18,7 +18,7 @@ spec:
             - "--output_labels=/tf-output"
             - "--image_dir=/images"
             - "--saved_model_dir=/tf-output"
-            image: chzbrgr71/got-image-training:1.51
+            image: chzbrgr71/got-image-training:1.63
             name: tensorflow
             #resources:
             #  limits:
