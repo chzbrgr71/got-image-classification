@@ -5,7 +5,7 @@ const fastify = require('fastify')({
 const gotCharacters = require('./public/data/gotChars.json')
 const fetch = require('node-fetch')
 
-console.log(gotCharacters)
+//console.log(gotCharacters)
 
 //var servingEndpoint = process.env.ML_SERVING_ENDPOINT
 servingEndpoint = "http://gotserving.brianredmond.io:8501/v1/models/inception:predict"
@@ -42,6 +42,7 @@ fastify.post('/upload', function (req, reply) {
             var resArray = results.outputs.prediction[0]
             console.log(resArray);
             let model = resArray.indexOf(Math.max(...resArray))
+            console.log(model)
             console.log(resArray[model])
             var pct = resArray[model].toPrecision(3) * 100
             console.log(pct)

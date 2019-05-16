@@ -1,5 +1,10 @@
 [
   {
+    "id": 0,
+    "characterName": "Benjen Stark",
+    "characterImageFull":  "/public/img/characters/benjen_stark.jpg"
+  },
+  {
     "id": 1,
     "characterName": "Samwell Tarly",
     "characterImageFull": "/public/img/characters/samwell_tarly.jpg"
@@ -21,10 +26,10 @@
     "characterImageFull": "/public/img/characters/robert_baratheon.jpg"
   },
   {
-    "id": 8,
-    "characterName": "Arya Stark",
-    "characterImageFull": "/public/img/characters/arya_stark.jpg"
-  },
+    "id": 5,
+    "characterName": "Sansa Stark",
+    "characterImageFull":  "/public/img/characters/sansa_stark.jpg"
+  },    
   {
     "id": 6,
     "characterName": "Cersei Lannister",
@@ -34,7 +39,17 @@
     "id": 7,
     "characterName": "Hodor",
     "characterImageFull": "/public/img/characters/hodor.jpg"
+  },     
+  {
+    "id": 8,
+    "characterName": "Arya Stark",
+    "characterImageFull": "/public/img/characters/arya_stark.jpg"
   },
+  {
+    "id": 9,
+    "characterName": "Margaery Tyrell",
+    "characterImageFull":  "/public/img/characters/margaery_tyrell.jpg"
+  },  
   {
     "id": 10,
     "characterName": "Theon Greyjoy",
@@ -49,20 +64,5 @@
     "id": 12,
     "characterName": "Tyrion Lannister",
     "characterImageFull":  "/public/img/characters/tyrion_lannister.jpg"
-  },
-  {
-    "id": 0,
-    "characterName": "Benjen Stark",
-    "characterImageFull":  "/public/img/characters/benjen_stark.jpg"
-  },
-  {
-    "id": 9,
-    "characterName": "Margaery Tyrell",
-    "characterImageFull":  "/public/img/characters/margaery_tyrell.jpg"
-  },
-  {
-    "id": 5,
-    "characterName": "Sansa Stark",
-    "characterImageFull":  "/public/img/characters/sansa_stark.jpg"
-  }   
+  }
 ]
