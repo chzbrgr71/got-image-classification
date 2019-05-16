@@ -369,7 +369,7 @@ Image downloader: https://github.com/teracow/googliser
   * Web App
 
   ```bash
-  export IMAGE_TAG=1.50
+  export IMAGE_TAG=1.51
   export ACRNAME=briaracr
 
   # build/push (ACR or Docker)
