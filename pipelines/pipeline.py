@@ -19,7 +19,7 @@ def got_image_pipeline(
     # preprocess images
     operations['preprocess'] = dsl.ContainerOp(
         name='preprocess',
-        image='briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.52',
+        image='briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.63',
         arguments=[
             '--bottleneck_dir', "/tf-output/bottlenecks",
             '--image_dir', '/images'
@@ -29,7 +29,7 @@ def got_image_pipeline(
     # train
     operations['train'] = dsl.ContainerOp(
         name='train',
-        image='briaracr.azurecr.io/chzbrgr71/got-image-training:1.51',
+        image='briaracr.azurecr.io/chzbrgr71/got-image-training:1.63',
         arguments=[
             '--bottleneck_dir', "/tmp/tensorflow/bottlenecks",
             '--model_dir', "/tmp/tensorflow/inception",

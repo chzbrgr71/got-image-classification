@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1beta2
 kind: TFJob
 metadata:
-  name: got-image-training
+  name: got-image-training-2
   namespace: default
 spec:
   tfReplicaSpecs:
@@ -35,5 +35,5 @@ spec:
             - name: azure-files
               azureFile:
                 secretName: azure-file-secret
-                shareName: aksshare
+                shareName: aksshare2
                 readOnly: false

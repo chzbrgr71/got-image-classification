@@ -17,7 +17,6 @@ Image downloader: https://github.com/teracow/googliser
 ./googliser.sh -p "Jamie Lannister" -f0 -N -b0
 ./googliser.sh -p "Margaery Tyrell game of thrones" -f0 -N -b0
 
-
 * Robert Baratheon (robert-baratheon)
 * Tyrion Lannister (tyrion-lannister)
 * Jon Snow (jon-snow)
