@@ -4,18 +4,15 @@ This is demo code for my talk at [GlueCon 2019](http://gluecon.com).
 
 "Machine Learning Made Easy on Kubernetes. DevOps for Data Scientists," May 23, 2019
 
+[-> Slides here <-](./glue-con-ml-slides.pdf)
+
 ### Game of Thrones Characters
 
 From: https://gameofthrones.fandom.com 
-JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/data/characters.json 
-Image downloader: https://chrome.google.com/webstore/detail/fatkun-batch-download-ima/nnjjahlikiabnchcpehcpkdeckfgnohf?hl=en 
-Image downloader: https://github.com/teracow/googliser 
 
-./googliser.sh -p "Benjen Stark" -f0 -N -b0
-./googliser.sh -p "Arya Stark" -f0 -N -b0
-./googliser.sh -p "Sansa Stark" -f0 -N -b0
-./googliser.sh -p "Jamie Lannister" -f0 -N -b0
-./googliser.sh -p "Margaery Tyrell game of thrones" -f0 -N -b0
+JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/data/characters.json 
+
+Image downloader: https://github.com/teracow/googliser 
 
 * Robert Baratheon (robert-baratheon)
 * Tyrion Lannister (tyrion-lannister)
@@ -295,19 +292,19 @@ Image downloader: https://github.com/teracow/googliser
 
   * Using Helm chart and AKS Virtual Nodes with GPU:
 
-  ```bash
-  helm install --name hyperparam ./hyperparameter/chart
+    ```bash
+    helm install --name hyperparam ./hyperparameter/chart
 
-  kubectl apply -f ./hyperparameter/tensorboard-hp.yaml
-  ```
+    kubectl apply -f ./hyperparameter/tensorboard-hp.yaml
+    ```
 
   * katib
 
-  ```bash
-  kubectl apply -f ./katib/random-example.yaml
-  
-  kubectl apply -f ./katib/got.yaml
-  ```
+    ```bash
+    kubectl apply -f ./katib/random-example.yaml
+    
+    kubectl apply -f ./katib/got.yaml
+    ```
 
 ### Inference
 
@@ -367,22 +364,22 @@ Image downloader: https://github.com/teracow/googliser
 
   * Web App
 
-  ```bash
-  export IMAGE_TAG=1.51
-  export ACRNAME=briaracr
+    ```bash
+    export IMAGE_TAG=1.51
+    export ACRNAME=briaracr
 
-  # build/push (ACR or Docker)
-  az acr build -t chzbrgr71/got-web-app:$IMAGE_TAG -r $ACRNAME ./webapp
+    # build/push (ACR or Docker)
+    az acr build -t chzbrgr71/got-web-app:$IMAGE_TAG -r $ACRNAME ./webapp
 
-  docker build -t chzbrgr71/got-web-app:$IMAGE_TAG -f ./webapp/Dockerfile ./webapp
-  docker push chzbrgr71/got-web-app:$IMAGE_TAG
+    docker build -t chzbrgr71/got-web-app:$IMAGE_TAG -f ./webapp/Dockerfile ./webapp
+    docker push chzbrgr71/got-web-app:$IMAGE_TAG
 
-  docker run -d --name web -p 3000:3000 -e ML_SERVING_ENDPOINT=http://gotserving.brianredmond.io:8501/v1/models/inception:predict chzbrgr71/got-web-app:$IMAGE_TAG
+    docker run -d --name web -p 3000:3000 -e ML_SERVING_ENDPOINT=http://gotserving.brianredmond.io:8501/v1/models/inception:predict chzbrgr71/got-web-app:$IMAGE_TAG
 
-  kubectl apply -f ./k8s/web.yaml
+    kubectl apply -f ./k8s/web.yaml
 
-  az webapp config appsettings set --name got-web -g game-of-thrones --settings ML_SERVING_ENDPOINT='http://gotserving.brianredmond.io:8501/v1/models/inception:predict'
-  ```
+    az webapp config appsettings set --name got-web -g game-of-thrones --settings ML_SERVING_ENDPOINT='http://gotserving.brianredmond.io:8501/v1/models/inception:predict'
+    ```
 
 ### Tensorflow Lite
 
@@ -490,7 +487,7 @@ Image downloader: https://github.com/teracow/googliser
       --output_node_names='final_result' \
   ```
 
-### Some Links
+### Random Links
 
 https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/#0 
 
