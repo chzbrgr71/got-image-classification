@@ -1,9 +1,11 @@
-FROM tensorflow/tensorflow:1.13.1
-#FROM tensorflow/tensorflow:1.13.1-gpu
+FROM tensorflow/tensorflow:2.0.0a0
 
 WORKDIR /
 
-COPY ./images /images
-COPY ./retrain.py /retrain.py
+COPY requirements.txt /
+RUN pip install -r requirements.txt
 
-ENTRYPOINT [ "python","retrain.py" ]
+COPY ./images /images
+COPY ./retrain-keras.py /retrain-keras.py
+
+ENTRYPOINT [ "python","retrain-keras.py" ]

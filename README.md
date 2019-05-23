@@ -39,7 +39,12 @@ Image downloader: https://github.com/teracow/googliser
     --publish 5000:5000 \
     --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification:/got-image-classification \
     --workdir /got-image-classification \
-  tensorflow/tensorflow:1.13.1
+  tensorflow/tensorflow:2.0.0a0
+
+  https://colab.research.google.com/github/tensorflow/examples/blob/master/courses/udacity_intro_to_tensorflow_for_deep_learning/l05c01_dogs_vs_cats_without_augmentation.ipynb#scrollTo=KSF2HqhDVrWk
+
+  https://colab.research.google.com/github/tensorflow/examples/blob/master/courses/udacity_intro_to_tensorflow_for_deep_learning/l06c01_tensorflow_hub_and_transfer_learning.ipynb#scrollTo=IXTB22SpxDLP
+  
 
   python ./training/retrain.py \
     --bottleneck_dir=/got-image-classification/tf-output/bottlenecks \
