@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1beta2
 kind: TFJob
 metadata:
-  name: got-image-training-2
+  name: got-image-training-3
   namespace: default
 spec:
   tfReplicaSpecs:

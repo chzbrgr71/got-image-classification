@@ -166,8 +166,8 @@ Image downloader: https://github.com/teracow/googliser
     > Azure Files Docs: https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
 
     ```bash
-    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarml201
-    export AKS_PERS_RESOURCE_GROUP=briar-aks-kf-201
+    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarml200prem
+    export AKS_PERS_RESOURCE_GROUP=briar-aks-kf-200
     export AKS_PERS_LOCATION=eastus
     export AKS_PERS_SHARE_NAME=aksshare
 
@@ -189,7 +189,7 @@ Image downloader: https://github.com/teracow/googliser
 
     kubectl create secret generic azure-file-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY
 
-    kubectl create secret generic azure-file-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY -n kubeflow
+    kubectl create secret generic azure-file-prem-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY
 
     # Add persistent volume
     kubectl apply -f ./k8s/persistent-volume.yaml
@@ -238,6 +238,9 @@ Image downloader: https://github.com/teracow/googliser
 
   # aci
   kubectl apply -f ./k8s/tfjob-training-vk.yaml
+
+  # Azure Premium Files
+  kubectl apply -f ./k8s/tfjob-training-prem.yaml
   ```
 
 * Deploy Serving 
