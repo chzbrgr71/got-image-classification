@@ -2,3 +2,4 @@ tensorflow_hub==0.4.0
 tensorflow_datasets
 numpy
 pillow
+SciPy
