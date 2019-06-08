@@ -34,10 +34,17 @@ spec:
       - FLOAT
       - --input_data_type
       - FLOAT
+      env:
+      - name: MSG
+        value: HELLO!
+      - name: KUBE_POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
       image: briaracr.azurecr.io/chzbrgr71/tflite-convert:1.0
       volumeMounts:
       - mountPath: /tf-output
-        name: azurefile
+        name: azure-files
     name: convert-tflite
     outputs:
       artifacts:
@@ -73,10 +80,17 @@ spec:
       - /tf-output/latest_model/got_retrained_graph-latest.pb
       command:
       - cp
+      env:
+      - name: MSG
+        value: HELLO!
+      - name: KUBE_POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
       image: alpine
       volumeMounts:
       - mountPath: /tf-output
-        name: azurefile
+        name: azure-files
     name: export-to-cloud
     outputs:
       artifacts:
@@ -109,7 +123,7 @@ spec:
   - dag:
       tasks:
       - dependencies:
-        - train
+        - score
         name: convert-tflite
         template: convert-tflite
       - dependencies:
@@ -118,11 +132,15 @@ spec:
         name: export-to-cloud
         template: export-to-cloud
       - dependencies:
-        - train
+        - score
         name: onnx
         template: onnx
       - name: preprocess
         template: preprocess
+      - dependencies:
+        - train
+        name: score
+        template: score
       - arguments:
           parameters:
           - name: learningrate
@@ -150,10 +168,17 @@ spec:
       - serve
       - --signature_def
       - serving_default
+      env:
+      - name: MSG
+        value: HELLO!
+      - name: KUBE_POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
       image: briaracr.azurecr.io/chzbrgr71/onnx-convert:1.1
       volumeMounts:
       - mountPath: /tf-output
-        name: azurefile
+        name: azure-files
     name: onnx
     outputs:
       artifacts:
@@ -189,11 +214,61 @@ spec:
       - /tf-output/bottlenecks
       - --image_dir
       - /images
-      image: briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.52
+      env:
+      - name: MSG
+        value: HELLO!
+      - name: KUBE_POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      image: briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.63
       volumeMounts:
       - mountPath: /tf-output
-        name: azurefile
+        name: azure-files
     name: preprocess
+    outputs:
+      artifacts:
+      - name: mlpipeline-ui-metadata
+        path: /mlpipeline-ui-metadata.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-ui-metadata.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
+      - name: mlpipeline-metrics
+        path: /mlpipeline-metrics.json
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: mlpipeline-minio-artifact
+          bucket: mlpipeline
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
+          key: runs/{{workflow.uid}}/{{pod.name}}/mlpipeline-metrics.tgz
+          secretKeySecret:
+            key: secretkey
+            name: mlpipeline-minio-artifact
+  - container:
+      args:
+      - /tf-output/latest_model
+      env:
+      - name: MSG
+        value: HELLO!
+      - name: KUBE_POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      image: briaracr.azurecr.io/chzbrgr71/got-model-scoring:1.0
+      volumeMounts:
+      - mountPath: /tf-output
+        name: azure-files
+    name: score
     outputs:
       artifacts:
       - name: mlpipeline-ui-metadata
@@ -244,13 +319,17 @@ spec:
       - '{{inputs.parameters.learningrate}}'
       - --train_batch_size
       - '{{inputs.parameters.trainbatchsize}}'
-      image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.51
       env:
-        - name: KUBE_POD_NAME
-          value: "{{workflow.uid}}"      
+      - name: MSG
+        value: HELLO!
+      - name: KUBE_POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.63
       volumeMounts:
       - mountPath: /tf-output
-        name: azurefile
+        name: azure-files
     inputs:
       parameters:
       - name: learningrate
@@ -286,8 +365,8 @@ spec:
             key: secretkey
             name: mlpipeline-minio-artifact
   volumes:
-  - name: azurefile
-    azureFile:
+  - azureFile:
+      readOnly: false
       secretName: azure-file-secret
       shareName: aksshare
-      readOnly: false  
+    name: azure-files

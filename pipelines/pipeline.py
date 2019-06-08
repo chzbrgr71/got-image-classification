@@ -11,8 +11,11 @@ def got_image_pipeline(
     trainbatchsize=100,
 ):
 
-    persistent_volume_name = 'azurefile'
+    persistent_volume_name = 'azure-files'
     persistent_volume_path = '/tf-output'
+    azure_file_secret_name = 'azure-file-secret'
+    azure_file_share_name = 'aksshare'
+    field_path = 'metadata.name'
 
     operations = {}
 
@@ -101,13 +104,22 @@ def got_image_pipeline(
     for _, op in operations.items():
         op.add_volume(
                 k8s_client.V1Volume(
-                    host_path=k8s_client.V1HostPathVolumeSource(
-                        path=persistent_volume_path),
+                    azure_file=k8s_client.V1AzureFileVolumeSource(
+                        secret_name=azure_file_secret_name,
+                        share_name=azure_file_share_name,
+                        read_only=False),
                         name=persistent_volume_name)
                 ) \
             .add_volume_mount(k8s_client.V1VolumeMount(
                 mount_path=persistent_volume_path, 
-                name=persistent_volume_name))
+                name=persistent_volume_name)
+                ) \
+            .add_env_variable(k8s_client.V1EnvVar(name='MSG', value='HELLO!')
+                ) \
+            .add_env_variable(k8s_client.V1EnvVar(name='KUBE_POD_NAME',
+                value_from=k8s_client.V1EnvVarSource(
+                    field_ref=k8s_client.V1ObjectFieldSelector(field_path=field_path)
+            )))
 
 if __name__ == '__main__':
    import kfp.compiler as compiler

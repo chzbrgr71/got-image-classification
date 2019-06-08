@@ -3,6 +3,7 @@
 {{- $batchsizelist := .Values.hyperParamValues.train_batch_size -}}
 {{- $image := .Values.image -}}
 {{- $useGPU := .Values.useGPU -}}
+{{- $useVirtualNode := .Values.useVirtualNode -}}
 {{- $chartname := .Chart.Name -}}
 {{- $chartversion := .Chart.Version -}}
 
@@ -58,8 +59,9 @@ spec:
             - name: azure-files
               azureFile:
                 secretName: azure-file-secret
-                shareName: hyperparam
+                shareName: hyperparam2
                 readOnly: false
+{{ if $useVirtualNode }}                
           nodeSelector: # for VK
             kubernetes.io/role: agent
             beta.kubernetes.io/os: linux
@@ -68,7 +70,8 @@ spec:
           - key: virtual-kubelet.io/provider
             operator: Exists
           - key: azure.com/aci
-            effect: NoSchedule                          
+            effect: NoSchedule   
+{{ end }}                                   
 ---
 {{- end }}
 {{- end }}                

@@ -139,7 +139,7 @@ Image downloader: https://github.com/teracow/googliser
 
   # run
   docker run -d --name tb -p 6006:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/got-image-classification/tf-output:/tf-output chzbrgr71/tensorboard:$IMAGE_TAG "--logdir" "/tf-output/training_summaries"
-    ```
+  ```
 
 ### Kubernetes Setup
 
@@ -151,7 +151,7 @@ Image downloader: https://github.com/teracow/googliser
     ```bash
     export VK_RELEASE=virtual-kubelet-latest
     export CHART_URL=https://github.com/virtual-kubelet/virtual-kubelet/raw/master/charts/$VK_RELEASE.tgz
-    helm install --name vk "$CHART_URL" --namespace kube-system -f ./vk-helm-values.yaml
+    helm install --name vk "$CHART_URL" --namespace kube-system -f ./k8s/vk-helm-values.yaml
     ```
 
   * Enable GPU's with daemonset. https://docs.microsoft.com/en-us/azure/aks/gpu-cluster 
@@ -166,8 +166,8 @@ Image downloader: https://github.com/teracow/googliser
     > Azure Files Docs: https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
 
     ```bash
-    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarml200prem
-    export AKS_PERS_RESOURCE_GROUP=briar-aks-kf-200
+    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarml300
+    export AKS_PERS_RESOURCE_GROUP=game-of-thrones
     export AKS_PERS_LOCATION=eastus
     export AKS_PERS_SHARE_NAME=aksshare
 
@@ -189,7 +189,7 @@ Image downloader: https://github.com/teracow/googliser
 
     kubectl create secret generic azure-file-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY
 
-    kubectl create secret generic azure-file-prem-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY
+    kubectl create secret generic azure-file-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY --namespace kubeflow
 
     # Add persistent volume
     kubectl apply -f ./k8s/persistent-volume.yaml
@@ -212,7 +212,7 @@ Image downloader: https://github.com/teracow/googliser
 * Install Kubeflow (I am using v0.5.0) https://www.kubeflow.org/docs/started/getting-started-k8s 
 
   ```bash
-  export KFAPP=kf-app-got-201
+  export KFAPP=kf-app-got-300
   kfctl init ${KFAPP}
   cd ${KFAPP}
   kfctl generate all -V
@@ -224,8 +224,6 @@ Image downloader: https://github.com/teracow/googliser
   ```bash
   kubectl -n kubeflow get all
   ```
-
-  Dashboard: http://168.62.172.254 
 
 * Execute TFJob
 
@@ -247,6 +245,12 @@ Image downloader: https://github.com/teracow/googliser
 
   ```bash
   kubectl apply -f ./k8s/serving.yaml
+  ```
+
+  ```bash
+  docker cp tf-output/latest_model/exported_model serving_base:/models/inception
+
+  docker commit --change "ENV MODEL_NAME inception" serving_base chzbrgr71/got-tfserving:1.0
   ```
 
 * Deploy Tensorboard
@@ -351,18 +355,20 @@ Image downloader: https://github.com/teracow/googliser
   ```bash
   kubectl apply -f ./k8s/serving.yaml
 
-  python serving/inception_client.py --server 13.82.100.255:8500 --image ./serving/night-king.jpg
+  python serving/inception_client.py --server 52.179.85.2:8500 --image ./serving/night-king.jpg
   python serving/inception_client.py --server gotserving.brianredmond.io:8500 --image ./serving/jon-snow.jpg
   python serving/inception_client.py --server gotserving.brianredmond.io:8500 --image ./serving/benjen.jpg
   ```
 
   ```bash
   # serving api metadata
-  curl http://gotserving.brianredmond.io:8501/v1/models/inception/versions/1/metadata
+  curl http://gotserving.eastus.azurecontainer.io:8501/v1/models/inception/versions/1/metadata
   
   # convert image to base64: https://onlinepngtools.com/convert-png-to-base64
 
+  curl -X POST http://gotserving.eastus.azurecontainer.io:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   curl -X POST http://gotserving.brianredmond.io:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
+  curl -X POST http://52.179.85.2:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   ```
 
   * Web App
