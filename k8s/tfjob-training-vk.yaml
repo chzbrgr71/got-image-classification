@@ -10,19 +10,17 @@ spec:
       template:
         spec:
           containers:
-          - args:
-            - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
-            - "--model_dir=/tmp/tensorflow/inception"
-            - "--summaries_dir=/tf-output"
-            - "--output_graph=/tf-output"
-            - "--output_labels=/tf-output"
-            - "--image_dir=/images"
-            - "--saved_model_dir=/tf-output"
-            image: chzbrgr71/got-image-training:1.63
-            name: tensorflow
-            #resources:
-            #  limits:
-            #    nvidia.com/gpu: 1            
+          - name: tensorflow
+            image: chzbrgr71/got-image-training:2.00
+            command: ["python","retrain.py"]
+            args:
+              - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
+              - "--model_dir=/tmp/tensorflow/inception"
+              - "--summaries_dir=/tf-output"
+              - "--output_graph=/tf-output"
+              - "--output_labels=/tf-output"
+              - "--image_dir=/images"
+              - "--saved_model_dir=/tf-output"       
             volumeMounts:
             - mountPath: /tf-output
               name: azure-files

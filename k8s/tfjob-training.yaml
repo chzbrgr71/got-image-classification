@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1beta2
 kind: TFJob
 metadata:
-  name: got-image-training-4
+  name: got-image-training-1
   namespace: default
 spec:
   tfReplicaSpecs:
@@ -18,7 +18,7 @@ spec:
             - "--output_labels=/tf-output"
             - "--image_dir=/images"
             - "--saved_model_dir=/tf-output"
-            image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.63
+            image: gotcr.azurecr.io/chzbrgr71/got-image-training:2.00
             name: tensorflow
             #resources:
             #  limits:
@@ -35,5 +35,5 @@ spec:
             - name: azure-files
               azureFile:
                 secretName: azure-file-secret
-                shareName: aksshare2
+                shareName: aksshare
                 readOnly: false

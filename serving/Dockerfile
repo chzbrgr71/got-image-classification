@@ -1,4 +1,5 @@
-FROM tensorflow/serving:1.13.0
+#FROM tensorflow/serving:1.13.0
+FROM tensorflow/tensorflow:1.13.1
 
 WORKDIR /
 

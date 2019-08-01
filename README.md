@@ -75,8 +75,8 @@ Image downloader: https://github.com/teracow/googliser
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.63
-  export ACRNAME=briaracr
+  export IMAGE_TAG=2.00
+  export ACRNAME=gotcr
 
   # build/push (ACR or Docker)
   az acr build -t chzbrgr71/got-image-preprocess:$IMAGE_TAG -r $ACRNAME ./preprocess
@@ -89,9 +89,9 @@ Image downloader: https://github.com/teracow/googliser
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.63
-  export IMAGE_TAG=1.63-gpu
-  export ACRNAME=briaracr
+  export IMAGE_TAG=2.0
+  export IMAGE_TAG=2.00-gpu
+  export ACRNAME=gotcr
 
   # build/push (ACR or Docker)
   az acr build -t chzbrgr71/got-image-training:$IMAGE_TAG -r $ACRNAME ./training
@@ -104,8 +104,8 @@ Image downloader: https://github.com/teracow/googliser
 
   ```bash
   # set image tag depending on target cpu/gpu
-  export IMAGE_TAG=1.0
-  export ACRNAME=briaracr
+  export IMAGE_TAG=2.01
+  export ACRNAME=gotcr
 
   # build/push (ACR or Docker)
   az acr build -t chzbrgr71/got-model-scoring:$IMAGE_TAG -r $ACRNAME ./serving
@@ -128,8 +128,8 @@ Image downloader: https://github.com/teracow/googliser
 
 * Tensorboard local
   ```bash
-  export IMAGE_TAG=1.5
-  export ACRNAME=briaracr
+  export IMAGE_TAG=2.00
+  export ACRNAME=gotcr
 
   # build/push (ACR or Docker)
   az acr build -t chzbrgr71/tensorboard:$IMAGE_TAG -r $ACRNAME -f ./tensorboard/Dockerfile ./tensorboard
@@ -146,6 +146,7 @@ Image downloader: https://github.com/teracow/googliser
 * Create Azure Kubernetes Service
 
   * Use node pools to add GPU nodes. https://docs.microsoft.com/en-us/azure/aks/use-multiple-node-pools 
+
   * Add Virtual Node add-on
 
     ```bash
@@ -166,9 +167,14 @@ Image downloader: https://github.com/teracow/googliser
     > Azure Files Docs: https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
 
     ```bash
-    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarml300
-    export AKS_PERS_RESOURCE_GROUP=game-of-thrones
+    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarmleast
+    export AKS_PERS_RESOURCE_GROUP=oss-summit-east
     export AKS_PERS_LOCATION=eastus
+    export AKS_PERS_SHARE_NAME=aksshare
+
+    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarmlwest
+    export AKS_PERS_RESOURCE_GROUP=oss-summit-west
+    export AKS_PERS_LOCATION=westus
     export AKS_PERS_SHARE_NAME=aksshare
 
     # Create the storage account
@@ -212,7 +218,7 @@ Image downloader: https://github.com/teracow/googliser
 * Install Kubeflow (I am using v0.5.0) https://www.kubeflow.org/docs/started/getting-started-k8s 
 
   ```bash
-  export KFAPP=kf-app-got-300
+  export KFAPP=kf-app-got-2
   kfctl init ${KFAPP}
   cd ${KFAPP}
   kfctl generate all -V
@@ -336,7 +342,7 @@ Image downloader: https://github.com/teracow/googliser
   sansa stark (score = 0.00271)
   ```
 
-* TF Serving
+* TF Serving (Local)
 
   ```bash
   docker run -d --name serving \
@@ -352,10 +358,12 @@ Image downloader: https://github.com/teracow/googliser
   python serving/inception_client.py --server localhost:8500 --image ./serving/night-king.jpg
   ```
 
+* TF Serving (AKS)
+
   ```bash
   kubectl apply -f ./k8s/serving.yaml
 
-  python serving/inception_client.py --server 52.179.85.2:8500 --image ./serving/night-king.jpg
+  python serving/inception_client.py --server 104.45.210.253:8500 --image ./serving/night-king.jpg
   python serving/inception_client.py --server gotserving.brianredmond.io:8500 --image ./serving/jon-snow.jpg
   python serving/inception_client.py --server gotserving.brianredmond.io:8500 --image ./serving/benjen.jpg
   ```
@@ -368,14 +376,16 @@ Image downloader: https://github.com/teracow/googliser
 
   curl -X POST http://gotserving.eastus.azurecontainer.io:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   curl -X POST http://gotserving.brianredmond.io:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
-  curl -X POST http://52.179.85.2:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
+  curl -X POST http://104.45.210.253:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
+
+  curl -X POST http://13.82.44.32:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   ```
 
   * Web App
 
     ```bash
-    export IMAGE_TAG=1.51
-    export ACRNAME=briaracr
+    export IMAGE_TAG=2.00
+    export ACRNAME=gotcr
 
     # build/push (ACR or Docker)
     az acr build -t chzbrgr71/got-web-app:$IMAGE_TAG -r $ACRNAME ./webapp
@@ -411,8 +421,8 @@ Image downloader: https://github.com/teracow/googliser
 * In container
 
   ```bash
-  export IMAGE_TAG=1.0
-  export ACRNAME=briaracr
+  export IMAGE_TAG=2.00
+  export ACRNAME=gotcr
 
   # build/push (ACR or Docker)
   az acr build -t chzbrgr71/tflite-convert:$IMAGE_TAG -r $ACRNAME -f ./convert/Dockerfile ./convert
@@ -458,8 +468,8 @@ Image downloader: https://github.com/teracow/googliser
 
   saved_model_cli show --dir /got-image-classification/tf-output/latest_model/exported_model/1/ --tag_set serve --signature_def serving_default
 
-  export IMAGE_TAG=1.1
-  export ACRNAME=briaracr
+  export IMAGE_TAG=2.00
+  export ACRNAME=gotcr
 
   # build/push (ACR or Docker)
   az acr build -t chzbrgr71/onnx-convert:$IMAGE_TAG -r $ACRNAME -f ./onnx/Dockerfile ./onnx

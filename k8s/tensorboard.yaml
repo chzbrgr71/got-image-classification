@@ -37,7 +37,7 @@ spec:
             readOnly: false 
       containers:
       - name: tensorboard
-        image: briaracr.azurecr.io/chzbrgr71/tensorboard:1.5
+        image: gotcr.azurecr.io/chzbrgr71/tensorboard:2.00
         imagePullPolicy: Always
         command:
          - /usr/local/bin/tensorboard

@@ -14,7 +14,7 @@ def got_image_pipeline(
     persistent_volume_name = 'azure-files'
     persistent_volume_path = '/tf-output'
     azure_file_secret_name = 'azure-file-secret'
-    azure_file_share_name = 'aksshare'
+    azure_file_share_name = 'pipelines'
     field_path = 'metadata.name'
 
     operations = {}
@@ -22,7 +22,7 @@ def got_image_pipeline(
     # preprocess images
     operations['preprocess'] = dsl.ContainerOp(
         name='preprocess',
-        image='briaracr.azurecr.io/chzbrgr71/got-image-preprocess:1.63',
+        image='gotcr.azurecr.io/chzbrgr71/got-image-preprocess:2.00',
         arguments=[
             '--bottleneck_dir', "/tf-output/bottlenecks",
             '--image_dir', '/images'
@@ -32,7 +32,7 @@ def got_image_pipeline(
     # train
     operations['train'] = dsl.ContainerOp(
         name='train',
-        image='briaracr.azurecr.io/chzbrgr71/got-image-training:1.63',
+        image='gotcr.azurecr.io/chzbrgr71/got-image-training:2.00',
         arguments=[
             '--bottleneck_dir', "/tmp/tensorflow/bottlenecks",
             '--model_dir', "/tmp/tensorflow/inception",
@@ -51,7 +51,7 @@ def got_image_pipeline(
     # score model
     operations['score'] = dsl.ContainerOp(
         name='score',
-        image='briaracr.azurecr.io/chzbrgr71/got-model-scoring:1.0',
+        image='gotcr.azurecr.io/chzbrgr71/got-model-scoring:2.01',
         arguments=[
             '/tf-output/latest_model'
         ]
@@ -61,7 +61,7 @@ def got_image_pipeline(
     # convert onnx
     operations['onnx'] = dsl.ContainerOp(
         name='onnx',
-        image='briaracr.azurecr.io/chzbrgr71/onnx-convert:1.1',
+        image='gotcr.azurecr.io/chzbrgr71/onnx-convert:2.00',
         arguments=[
             'show',
             '--dir', '/tf-output/latest_model/exported_model/1/',
@@ -74,7 +74,7 @@ def got_image_pipeline(
     # convert tflite
     operations['convert-tflite'] = dsl.ContainerOp(
         name='convert-tflite',
-        image='briaracr.azurecr.io/chzbrgr71/tflite-convert:1.0',
+        image='gotcr.azurecr.io/chzbrgr71/tflite-convert:2.00',
         arguments=[
             '--graph_def_file', '/tf-output/latest_model/got_retrained_graph.pb',
             '--output_file', '/tf-output/latest_model/optimized_graph.lite',

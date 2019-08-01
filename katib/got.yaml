@@ -43,7 +43,7 @@ spec:
               spec:
                 containers:
                 - name: {{.WorkerID}}
-                  image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.51
+                  image: gotcr.azurecr.io/chzbrgr71/got-image-training:2.00
                   args:                
                     - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
                     - "--model_dir=/tmp/tensorflow/inception"

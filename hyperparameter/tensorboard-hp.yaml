@@ -33,11 +33,11 @@ spec:
         - name: azure-files
           azureFile:
             secretName: azure-file-secret
-            shareName: hyperparam
+            shareName: hyperparam1
             readOnly: false 
       containers:
       - name: tensorboard-hp
-        image: briaracr.azurecr.io/chzbrgr71/tensorboard:1.5
+        image: gotcr.azurecr.io/chzbrgr71/tensorboard:2.00
         imagePullPolicy: Always
         command:
          - /usr/local/bin/tensorboard

@@ -18,7 +18,7 @@ spec:
             - "--output_labels=/tf-output"
             - "--image_dir=/images"
             - "--saved_model_dir=/tf-output"
-            image: briaracr.azurecr.io/chzbrgr71/got-image-training:1.63-gpu
+            image: gotcr.azurecr.io/chzbrgr71/got-image-training:2.00-gpu
             name: tensorflow
             resources:
               limits:
@@ -43,5 +43,5 @@ spec:
             - name: azure-files
               azureFile:
                 secretName: azure-file-secret
-                shareName: aksshare2
+                shareName: aksshare
                 readOnly: false
