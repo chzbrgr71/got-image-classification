@@ -43,5 +43,5 @@ spec:
             - name: azure-files
               azureFile:
                 secretName: azure-file-secret
-                shareName: aksshare
+                shareName: aksshare2
                 readOnly: false

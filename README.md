@@ -1,18 +1,12 @@
 ## Game of Thrones Image Classification Demo
 
-This is demo code for my talk at [GlueCon 2019](http://gluecon.com).
+This is demo code for my talk at [Open Source Summit NA 2019](https://ossna19.sched.com/event/PUTJ).
 
-"Machine Learning Made Easy on Kubernetes. DevOps for Data Scientists," May 23, 2019
+"Machine Learning Made Easy on Kubernetes. DevOps for Data Scientists," August 21, 2019
 
-[-> Slides here <-](./glue-con-ml-slides.pdf)
+[-> Slides here <-](./ml-slides.pdf)
 
 ### Game of Thrones Characters
-
-From: https://gameofthrones.fandom.com 
-
-JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/data/characters.json 
-
-Image downloader: https://github.com/teracow/googliser 
 
 * Robert Baratheon (robert-baratheon)
 * Tyrion Lannister (tyrion-lannister)
@@ -167,13 +161,8 @@ Image downloader: https://github.com/teracow/googliser
     > Azure Files Docs: https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
 
     ```bash
-    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarmleast
-    export AKS_PERS_RESOURCE_GROUP=oss-summit-east
-    export AKS_PERS_LOCATION=eastus
-    export AKS_PERS_SHARE_NAME=aksshare
-
-    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarmlwest
-    export AKS_PERS_RESOURCE_GROUP=oss-summit-west
+    export AKS_PERS_STORAGE_ACCOUNT_NAME=briarmlwestnew
+    export AKS_PERS_RESOURCE_GROUP=oss-summit-west-new
     export AKS_PERS_LOCATION=westus
     export AKS_PERS_SHARE_NAME=aksshare
 
@@ -218,7 +207,7 @@ Image downloader: https://github.com/teracow/googliser
 * Install Kubeflow (I am using v0.5.0) https://www.kubeflow.org/docs/started/getting-started-k8s 
 
   ```bash
-  export KFAPP=kf-app-got-2
+  export KFAPP=kf-app-got-3
   kfctl init ${KFAPP}
   cd ${KFAPP}
   kfctl generate all -V
@@ -377,8 +366,6 @@ Image downloader: https://github.com/teracow/googliser
   curl -X POST http://gotserving.eastus.azurecontainer.io:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   curl -X POST http://gotserving.brianredmond.io:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   curl -X POST http://104.45.210.253:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
-
-  curl -X POST http://13.82.44.32:8501/v1/models/inception:predict -d "@./serving/daenerys-targaryen.json"
   ```
 
   * Web App
@@ -506,7 +493,13 @@ Image downloader: https://github.com/teracow/googliser
       --output_node_names='final_result' \
   ```
 
-### Random Links
+### Reference Links
+
+From: https://gameofthrones.fandom.com 
+
+JSON: https://raw.githubusercontent.com/jeffreylancaster/game-of-thrones/master/data/characters.json 
+
+Image downloader: https://github.com/teracow/googliser 
 
 https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/#0 
 

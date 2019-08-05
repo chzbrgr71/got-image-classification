@@ -59,7 +59,7 @@ spec:
             - name: azure-files
               azureFile:
                 secretName: azure-file-secret
-                shareName: hyperparam1
+                shareName: hyperparam2
                 readOnly: false
 {{ if $useVirtualNode }}                
           nodeSelector: # for VK
