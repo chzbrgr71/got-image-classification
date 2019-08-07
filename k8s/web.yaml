@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
       - name: got-web-app
-        image: gotcr.azurecr.io/chzbrgr71/got-web-app:2.00
+        image: gotcr.azurecr.io/chzbrgr71/got-web-app:2.01
         imagePullPolicy: Always
         env:
         - name: ML_SERVING_ENDPOINT

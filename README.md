@@ -371,7 +371,7 @@ This is demo code for my talk at [Open Source Summit NA 2019](https://ossna19.sc
   * Web App
 
     ```bash
-    export IMAGE_TAG=2.00
+    export IMAGE_TAG=2.01
     export ACRNAME=gotcr
 
     # build/push (ACR or Docker)
